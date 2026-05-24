@@ -1,0 +1,12 @@
+# compiled binary
+cnae-risk-classifier
+cnae-risk-classifier.exe
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

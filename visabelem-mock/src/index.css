@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased text-slate-800 bg-[#f8fafc] font-sans;
+  }
+}
+
+@layer components {
+  .btn-production {
+    @apply inline-flex items-center justify-center rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all active:scale-95;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+  }
+
+  .glass-card {
+    @apply bg-white border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Custom Scrollbar for sleek look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
+}
+
+/* Modern Typography Tweaks */
+h1,
+h2,
+h3,
+h4 {
+  @apply tracking-tight;
+}
+
+/* Button overrides for that sharper look */
+button {
+  @apply tracking-wide;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}

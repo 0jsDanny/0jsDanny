@@ -1,0 +1,23 @@
+# Database
+*.db
+
+# Logs
+*.log
+
+# Checkpoint / state
+migration_state.json
+
+# Environment/credentials
+.env
+
+# Python caching
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
