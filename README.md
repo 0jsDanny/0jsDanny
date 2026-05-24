@@ -1,4 +1,4 @@
-# Daniel Santos de Jesus
+# Daniel S. de Jesus
 ### Software Engineer · Belém, PA, Brasil
 
 I build production systems under real-world constraints: limited budgets, legacy government infrastructure, data privacy compliance (LGPD), and zero margin for downtime.
