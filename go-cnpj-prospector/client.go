@@ -200,6 +200,7 @@ type CNPJWSResponse struct {
 	CNPJRaiz         string                `json:"cnpj_raiz"`
 	RazaoSocial      string                `json:"razao_social"`
 	CapitalSocial    string                `json:"capital_social"`
+	AtualizadoEm     string                `json:"atualizado_em"`
 	Porte            CNPJWSPorte           `json:"porte"`
 	NaturezaJuridica CNPJWSNatureza        `json:"natureza_juridica"`
 	Socios           []CNPJWSSocio         `json:"socios"`
@@ -632,7 +633,7 @@ func queryCNPJWS(ctx context.Context, cnpj string) (*CNPJNormalizedResponse, err
 		Telefone2:       &tel2,
 		Email:           &est.Email,
 		DataAbertura:    &est.DataInicioAtividade,
-		DataAtualizacao: nil,
+		DataAtualizacao: &data.AtualizadoEm,
 		SimplesNacional: simplesOption,
 		MEI:             meiOption,
 		Socios:          socios,
