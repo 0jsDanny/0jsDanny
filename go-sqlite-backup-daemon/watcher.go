@@ -153,7 +153,7 @@ func (w *DbWatcher) readWalDelta(walPath string, currentSize int64) {
 		// Send payload to uploader
 		w.config.UploadChannel <- BackupPayload{
 			Type:      BackupDelta,
-			Filename:  filepath.Base(w.config.DbPath) + fmtWalSuffix(w.walOffset),
+			Filename:  filepath.Base(w.config.DbPath) + fmtWalSuffix(),
 			Data:      deltaBytes,
 			Timestamp: time.Now(),
 		}
@@ -201,7 +201,7 @@ func (w *DbWatcher) checkForFullBackup() {
 	}
 }
 
-func fmtWalSuffix(offset int64) string {
-	// e.g., .wal.0000004096
+func fmtWalSuffix() string {
+	// e.g., .wal.20260528185640.wal
 	return time.Now().Format("-20060102150405") + ".wal"
 }
