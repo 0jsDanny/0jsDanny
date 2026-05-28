@@ -96,6 +96,7 @@ Queries the fallback chain for the specified CNPJ. Supports both formatted (`19.
     "telefone1": "1123851939",
     "email": "contato@ok.org.br",
     "dataAbertura": "2013-10-03",
+    "dataAtualizacao": "2026-05-28T21:00:54Z",
     "simplesNacional": {
       "optante": false
     },
