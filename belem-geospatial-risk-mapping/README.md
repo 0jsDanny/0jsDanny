@@ -5,6 +5,8 @@
 ![Shapely](https://img.shields.io/badge/Shapely-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![PyMuPDF](https://img.shields.io/badge/PyMuPDF-FF6F61?style=for-the-badge&logo=pdf&logoColor=white)
 
+![Belém Geological Risk Map Preview](./preview.png)
+
 An end-to-end Geospatial Data Engineering project designed to solve the challenge of extracting, georeferencing, and structuring administrative boundaries and environmental risk vectors from unstructured, official PDF maps. 
 
 The project consolidates two distinct scientific data extraction pipelines and exposes the georeferenced results on an interactive frontend GIS dashboard.
