@@ -405,7 +405,7 @@ func (c *WeatherClient) GetOndas(cityCode int, days int) (*OndasPrediction, erro
 			if days == 1 {
 				// Single day with manha/tarde/noite subdivisions
 				var dataList []Ondas
-				mapPeriodo := func(p *XMLOndaPeriodo, defaultHour string) {
+				mapPeriodo := func(p *XMLOndaPeriodo) {
 					if p == nil {
 						return
 					}
@@ -420,9 +420,9 @@ func (c *WeatherClient) GetOndas(cityCode int, days int) (*OndasPrediction, erro
 						Hora:             GetOndaHora(p.Dia),
 					})
 				}
-				mapPeriodo(xmlOndas.Manha, "12h Z")
-				mapPeriodo(xmlOndas.Tarde, "18h Z")
-				mapPeriodo(xmlOndas.Noite, "21h Z")
+				mapPeriodo(xmlOndas.Manha)
+				mapPeriodo(xmlOndas.Tarde)
+				mapPeriodo(xmlOndas.Noite)
 
 				if len(dataList) > 0 {
 					targetDate := ParseOndasDate(xmlOndas.Atualizacao)
