@@ -93,6 +93,50 @@ To ensure optimal stability and align with **BrasilAPI's** specifications, the f
 
 ---
 
+## 🌐 Reference: CPTEC/INPE XML WebService Catalog
+
+This section documents the underlying **CPTEC/INPE XML WebService** (`servicos.cptec.inpe.br`) structure, which this proxy interacts with and normalizes.
+
+### 🗺️ CPTEC XML Endpoints Map
+
+All requests use the `GET` method and return structured XML payloads:
+
+| Category | Route | Parameter | Description |
+| :--- | :--- | :--- | :--- |
+| **Cities** | `/XML/listaCidades` | `?city=city_name` | Searches cities and returns CPTEC IDs. |
+| **Weather** | `/XML/cidade/{id}/previsao.xml` | City ID | Classic forecast for the next 4 days. |
+| **Weather** | `/XML/cidade/7dias/{id}/previsao.xml` | City ID | Weather forecast for the next 7 days. |
+| **Weather (GPS)** | `/XML/cidade/7dias/{lat}/{lon}/previsaoLatLon.xml` | Coordinates | Forecast for 7 days for the nearest city. |
+| **Weather** | `/XML/cidade/{id}/estendida.xml` | City ID | 14-day extended trend forecast (Ensemble). |
+| **Weather (GPS)** | `/XML/cidade/{lat}/{lon}/estendidaLatLon.xml` | Coordinates | 14-day extended forecast by GPS (Ensemble). |
+| **Capitais** | `/XML/capitais/condicoesAtuais.xml` | None | Current weather in all Brazilian capitals. |
+| **Airports** | `/XML/estacao/{icao}/condicoesAtuais.xml` | ICAO Code | Real-time weather observations (METAR). |
+| **UV Radiation** | `/XML/cidade/{id}/condicoesAtuaisUV.xml` | City ID | UV index updated every 15 minutes. |
+| **Waves** | `/XML/cidade/{id}/dia/{day_num}/ondas.xml` | ID & Day (0 to 2) | Wave forecast periods (morning, afternoon, night). |
+| **Waves** | `/XML/cidade/{id}/todos/tempos/ondas.xml` | City ID | Detailed 6-day wave forecast (8 times/day). |
+
+---
+
+### 🌥️ Weather Condition Codes Mapping (`<tempo>`)
+
+Below is the dictionary mapping the acronyms returned by CPTEC's `<tempo>` XML tags to their respective descriptions:
+
+| Code | Portuguese Description | English Description |
+| :---: | :--- | :--- |
+| **ec** | Encoberto com Chuvas Isoladas | Overcast with Isolated Rains |
+| **ci** | Chuvas Isoladas | Isolated Rains |
+| **ch** | Chuvoso | Rainy |
+| **pm** | Pancadas de Chuva pela Manhã | Rain Showers in the Morning |
+| **np** | Nublado e Pancadas de Chuva | Cloudy with Rain Showers |
+| **pc** | Pancadas de Chuva | Rain Showers |
+| **pn** | Parcialmente Nublado | Partly Cloudy |
+| **c** | Claro (Céu Claro) | Clear Sky |
+| **t** | Tempestade | Storm |
+| **ne** | Névoa (Nevoeiro) | Fog / Mist |
+| **nd** | Não Definido | Undefined |
+
+---
+
 ## ⚡ Running & Testing
 
 ### Requirements
