@@ -38,6 +38,7 @@ Below is a catalog of the modules, patterns, and case studies included in this r
 | **Go Engineering** | [go-pdf-signer](./go-pdf-signer) | `Go` | Cryptographic PDF PAdES signer & verifier service, PKCS#12 decoding, ByteRange hashing, RSA PKCS1v15 signatures. |
 | **Go Engineering** | [go-audit-trail-middleware](./go-audit-trail-middleware) | `Go` | Cryptographic audit trail middleware (HMAC-SHA256), tamper-evident append-only JSON logging for LGPD. |
 | **Go Engineering** | [go-cptec-proxy](./go-cptec-proxy) | `Go` | CPTEC XML weather & wave proxy, BrasilAPI JSON schema normalization & fallback, local memory cache, ISO-8859-1 translation. |
+| **Open Data Spec** | [cptec-data-catalogs](./cptec-data-catalogs) | `Markdown` | Comprehensive simplified mappings and technical dictionary for CPTEC/INPE FTP and DataServer repositories. |
 | **Backend Engineering** | [python-siat-cache-proxy](./python-siat-cache-proxy) | `Python` `FastAPI` `SQLite` | Sidecar caching proxy, Cache-Aside pattern (infinite paid cache vs 15-min TTL), SQLite WAL optimization, LGPD log privacy by design. |
 | **Data Engineering** | [receita-federal-cnpj-miner](./receita-federal-cnpj-miner) | `Python` `SQLite` | Streaming parsing of large-scale CSVs, spelling normalizations, checkpoint/resume mechanics, MEI detection. |
 | **Data Engineering** | [node-etl-migration-scripts](./node-etl-migration-scripts) | `Node.js` | Batch ETL pipeline for PocketBase, resumable database synchronization using mapping states. |
