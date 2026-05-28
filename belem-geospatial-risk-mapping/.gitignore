@@ -1,0 +1,7 @@
+pdfs/
+__pycache__/
+*.geojson
+belem_bairros_supremo.js
+belem_riscos_geologicos.js
+*.db
+*.log

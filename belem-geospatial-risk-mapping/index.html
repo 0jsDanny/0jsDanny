@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Mapa Supremo de Belém</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-bg: rgba(15, 23, 42, 0.85);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-color: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.35);
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        #map {
+            flex-grow: 1;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* UI Overlay Layout */
+        .sidebar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            bottom: 20px;
+            width: 380px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-header p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .search-container {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .item-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 16px 24px;
+        }
+
+        .item-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .item-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .item-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .list-item {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .list-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: var(--border-color);
+        }
+
+        .list-item.selected {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: var(--accent-color);
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .item-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .item-id {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-mono: true;
+        }
+
+        .tag {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .tag-island {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .tag-new {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning-color);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .tag-bairro {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+        }
+
+        .tag-alto {
+            background: rgba(249, 115, 22, 0.15);
+            color: #f97316;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+
+        .tag-muito-alto {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary) !important;
+        }
+
+        /* Detail Panel */
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 380px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            z-index: 10;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .info-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        .info-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .info-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .info-title {
+            font-size: 18px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .info-notes {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            background: rgba(59, 130, 246, 0.05);
+            border-left: 3px solid var(--accent-color);
+            padding: 8px 12px;
+            border-radius: 0 6px 6px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>Belém Supremo</h1>
+            <p>Visualizador do Shape unificado de Belém</p>
+        </div>
+        <div class="tab-container" style="display: flex; border-bottom: 1px solid var(--border-color); background: rgba(0, 0, 0, 0.15);">
+            <button class="tab-btn active" id="tab-bairros" style="flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-primary); font-family: var(--font-main); font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid var(--accent-color); transition: all 0.2s ease;">Bairros Oficiais</button>
+            <button class="tab-btn" id="tab-riscos" style="flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-secondary); font-family: var(--font-main); font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s ease;">Áreas de Risco</button>
+        </div>
+        <div class="search-container">
+            <input type="text" class="search-input" id="search" placeholder="Buscar bairro ou ilha...">
+        </div>
+        <div class="item-list" id="list">
+            <!-- Items filled dynamically -->
+        </div>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+        <!-- Details filled dynamically on hover/select -->
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Local GeoJSON data -->
+    <script src="belem_bairros_supremo.js"></script>
+    <script src="belem_riscos_geologicos.js"></script>
+
+    <script>
+        // Setup Map with dark theme
+        const map = L.map('map', {
+            zoomControl: false
+        }).setView([-1.35, -48.45], 11);
+
+        L.control.zoom({
+            position: 'bottomright'
+        }).addTo(map);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+        }).addTo(map);
+
+        let geojsonLayer;
+        let riscosLayer;
+        let selectedLayer = null;
+        let selectedRiscoLayer = null;
+        let activeTab = 'bairros'; // 'bairros' or 'riscos'
+
+        // Custom Styles
+        function getStyle(feature) {
+            const props = feature.properties;
+            
+            // Background boundaries (island limits)
+            if (props.is_background) {
+                return {
+                    color: '#94a3b8',
+                    weight: 2,
+                    opacity: activeTab === 'bairros' ? 0.6 : 0.2,
+                    dashArray: '6, 6',
+                    fill: false,
+                    interactive: false
+                };
+            }
+
+            if (activeTab === 'riscos') {
+                return {
+                    color: '#475569',
+                    weight: 1,
+                    opacity: 0.3,
+                    fillColor: '#475569',
+                    fillOpacity: 0.03,
+                    interactive: false
+                };
+            }
+
+            const id = props.bairro_id;
+            let color = '#4f46e5'; 
+            let weight = 1;
+            let fillOpacity = 0.3;
+
+            if (id === '081') {
+                color = '#10b981';
+                fillOpacity = 0.45;
+                weight = 1.5;
+            } else if (id === '082') {
+                color = '#f59e0b';
+                fillOpacity = 0.45;
+                weight = 1.5;
+            } else if (id === '083') {
+                color = '#ec4899';
+                fillOpacity = 0.4;
+                weight = 1.5;
+            } else {
+                const colors = ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#06b6d4', '#0ea5e9'];
+                let hash = 0;
+                const name = props.bairro_nome || '';
+                for (let i = 0; i < name.length; i++) {
+                    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                color = colors[Math.abs(hash) % colors.length];
+            }
+
+            return {
+                color: color,
+                weight: weight,
+                opacity: 0.8,
+                fillColor: color,
+                fillOpacity: fillOpacity,
+                interactive: true
+            };
+        }
+
+        function highlightFeature(e) {
+            const layer = e.target;
+            if (layer === selectedLayer) return;
+            layer.setStyle({ weight: 3, opacity: 1, fillOpacity: 0.55 });
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) layer.bringToFront();
+            showInfoPanel(layer.feature.properties);
+        }
+
+        function resetHighlight(e) {
+            const layer = e.target;
+            if (layer === selectedLayer) return;
+            geojsonLayer.resetStyle(layer);
+            if (selectedLayer) showInfoPanel(selectedLayer.feature.properties);
+            else document.getElementById('infoPanel').style.display = 'none';
+        }
+
+        function selectFeature(feature, layer) {
+            if (selectedLayer && selectedLayer !== layer) geojsonLayer.resetStyle(selectedLayer);
+            selectedLayer = layer;
+            layer.setStyle({ weight: 4, color: '#ffffff', opacity: 1, fillOpacity: 0.65 });
+            layer.bringToFront();
+            map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+            showInfoPanel(feature.properties);
+            document.querySelectorAll('.list-item').forEach(el => el.classList.remove('selected'));
+            const listItem = document.getElementById('item-' + feature.properties.bairro_id);
+            if (listItem) {
+                listItem.classList.add('selected');
+                listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function onEachFeature(feature, layer) {
+            if (feature.properties.is_background) return;
+            layer.on({ mouseover: highlightFeature, mouseout: resetHighlight, click: (e) => selectFeature(feature, layer) });
+        }
+
+        geojsonLayer = L.geoJSON(BELEM_GEOJSON, { style: getStyle, onEachFeature: onEachFeature }).addTo(map);
+        map.fitBounds(geojsonLayer.getBounds(), { padding: [40, 40] });
+
+        function showInfoPanel(props) {
+            const panel = document.getElementById('infoPanel');
+            panel.style.display = 'flex';
+            const areaKm2 = props.area_m2 ? (props.area_m2 / 1_000_000).toFixed(2) : 'N/A';
+            const notes = props.notes || (props.source_pdf ? `Fonte oficial extraída via PDF CODEM.` : '');
+            panel.innerHTML = `
+                <div class="info-title">${props.bairro_nome}</div>
+                <div class="stat-grid">
+                    <div class="stat-box"><span class="stat-label">ID Bairro</span><span class="stat-value">${props.bairro_id}</span></div>
+                    <div class="stat-box"><span class="stat-label">Área</span><span class="stat-value">${areaKm2} km²</span></div>
+                    <div class="stat-box"><span class="stat-label">Vértices</span><span class="stat-value">${props.vertex_count || 0}</span></div>
+                    <div class="stat-box"><span class="stat-label">Arquivo PDF</span><span class="stat-value" style="font-size: 11px; word-break: break-all;">${props.source_pdf || 'N/A'}</span></div>
+                </div>
+                ${notes ? `<div class="info-notes">${notes}</div>` : ''}
+            `;
+        }
+
+        const listContainer = document.getElementById('list');
+        const sortedFeatures = [...BELEM_GEOJSON.features].filter(f => !f.properties.is_background).sort((a, b) => a.properties.bairro_nome.localeCompare(b.properties.bairro_nome));
+
+        function renderList(featuresToRender) {
+            listContainer.innerHTML = '';
+            featuresToRender.forEach(f => {
+                const props = f.properties;
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.id = 'item-' + props.bairro_id;
+                let tagText = 'Bairro';
+                let tagClass = 'tag-bairro';
+                if (props.bairro_id === '081' || props.bairro_id === '082') { tagText = 'Ilha Nova'; tagClass = 'tag-new'; }
+                else if (props.bairro_id === '083') { tagText = 'Outeiro Comp.'; tagClass = 'tag-new'; }
+                else if (props.bairro_id === '051' || props.bairro_id === '052') { tagText = 'Ilha'; tagClass = 'tag-island'; }
+                item.innerHTML = `<div class="item-info"><span class="item-name">${props.bairro_nome}</span><span class="item-id">ID: ${props.bairro_id}</span></div><span class="tag ${tagClass}">${tagText}</span>`;
+                item.addEventListener('click', () => { geojsonLayer.eachLayer(layer => { if (layer.feature.properties.bairro_id === props.bairro_id) selectFeature(f, layer); }); });
+                listContainer.appendChild(item);
+            });
+        }
+        renderList(sortedFeatures);
+
+        // --- RISCOS GEOLÓGICOS IMPLEMENTATION ---
+
+        function getRiscoStyle(feature) {
+            const props = feature.properties;
+            const color = props.grau_risco === 'Muito Alto' ? '#ef4444' : '#f97316';
+            return { color: color, weight: 2, opacity: 0.9, fillColor: color, fillOpacity: 0.5, interactive: true };
+        }
+
+        function highlightRiscoFeature(e) {
+            const layer = e.target;
+            if (layer === selectedRiscoLayer) return;
+            layer.setStyle({ weight: 3.5, opacity: 1, fillOpacity: 0.7 });
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) layer.bringToFront();
+            showRiscoInfoPanel(layer.feature.properties);
+        }
+
+        function resetRiscoHighlight(e) {
+            const layer = e.target;
+            if (layer === selectedRiscoLayer) return;
+            riscosLayer.resetStyle(layer);
+            if (selectedRiscoLayer) showRiscoInfoPanel(selectedRiscoLayer.feature.properties);
+            else document.getElementById('infoPanel').style.display = 'none';
+        }
+
+        function selectRiscoFeature(feature, layer) {
+            if (selectedRiscoLayer && selectedRiscoLayer !== layer) riscosLayer.resetStyle(selectedRiscoLayer);
+            selectedRiscoLayer = layer;
+            layer.setStyle({ weight: 4, color: '#ffffff', opacity: 1, fillOpacity: 0.8 });
+            layer.bringToFront();
+            map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+            showRiscoInfoPanel(feature.properties);
+            document.querySelectorAll('.list-item').forEach(el => el.classList.remove('selected'));
+            const listItem = document.getElementById('risco-item-' + feature.properties.setor_id);
+            if (listItem) {
+                listItem.classList.add('selected');
+                listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function onEachRiscoFeature(feature, layer) {
+            layer.on({ mouseover: highlightRiscoFeature, mouseout: resetRiscoHighlight, click: (e) => selectRiscoFeature(feature, layer) });
+        }
+
+        function showRiscoInfoPanel(props) {
+            const panel = document.getElementById('infoPanel');
+            panel.style.display = 'flex';
+            const grau = props.grau_risco || 'Alto';
+            const tagClass = grau === 'Alto' ? 'tag-alto' : 'tag-muito-alto';
+            let sugestoesHtml = props.sugestoes_intervencao ? `
+                <div style="font-size: 12px; font-weight: 700; margin-top: 6px; border-top: 1px solid var(--border-color); padding-top: 10px;">Sugestões de Intervenção:</div>
+                <ul style="font-size: 12px; color: var(--text-secondary); padding-left: 18px; margin-top: 4px; display: flex; flex-direction: column; gap: 4px;">
+                    ${props.sugestoes_intervencao.map(s => `<li>${s}</li>`).join('')}
+                </ul>` : '';
+            let notasHtml = props.notas ? `
+                <div style="font-size: 11px; color: var(--text-secondary); background: rgba(255, 255, 255, 0.03); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); margin-top: 6px;">
+                    <strong>Notas:</strong> ${props.notas.join(' ')}
+                </div>` : '';
+            panel.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; gap: 12px;">
+                    <div class="info-title" style="border: none; padding: 0; margin: 0; font-size: 16px; line-height: 1.3;">${props.setor_id.replace('PA_BELEM_SR_', 'Setor ').replace('_CPRM', '')}</div>
+                    <span class="tag ${tagClass}" style="flex-shrink: 0; font-size: 9px;">Risco ${grau}</span>
+                </div>
+                <div class="stat-grid">
+                    <div class="stat-box"><span class="stat-label">Bairro</span><span class="stat-value" style="font-size: 12px;">${props.bairro_nome}</span></div>
+                    <div class="stat-box"><span class="stat-label">Tipologia</span><span class="stat-value" style="font-size: 12px;">${props.tipologia || 'N/A'}</span></div>
+                    <div class="stat-box"><span class="stat-label">Imóveis</span><span class="stat-value">${props.imoveis_em_risco || 0}</span></div>
+                    <div class="stat-box"><span class="stat-label">Pessoas</span><span class="stat-value">${props.pessoas_em_risco || 0}</span></div>
+                </div>
+                <div style="font-size: 11px; line-height: 1.4; color: var(--text-secondary); background: rgba(0, 0, 0, 0.2); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color);"><strong>Localização:</strong> ${props.localizacao}</div>
+                <div style="font-size: 12px; line-height: 1.5; color: var(--text-primary); margin-top: 4px;"><strong>Descrição:</strong> ${props.descricao}</div>
+                ${sugestoesHtml}${notasHtml}
+                <div style="font-size: 11px; color: var(--text-secondary); border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 4px;">
+                    <span><strong>Equipe:</strong> ${props.equipe_tecnica ? props.equipe_tecnica.join(', ') : 'N/A'}</span><br>
+                    <span><strong>Data:</strong> ${props.data_referencia}</span>
+                </div>
+            `;
+        }
+
+        const sortedRiscos = [...RISCOS_GEOJSON.features].sort((a, b) => a.properties.setor_id.localeCompare(b.properties.setor_id));
+
+        function renderRiscoList(featuresToRender) {
+            listContainer.innerHTML = '';
+            featuresToRender.forEach(f => {
+                const props = f.properties;
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.id = 'risco-item-' + props.setor_id;
+                const grau = props.grau_risco || 'Alto';
+                const tagClass = grau === 'Alto' ? 'tag-alto' : 'tag-muito-alto';
+                item.innerHTML = `<div class="item-info"><span class="item-name">${props.setor_id.replace('PA_BELEM_SR_', 'Setor ').replace('_CPRM', '')}</span><span class="item-id">${props.bairro_nome}</span></div><span class="tag ${tagClass}">${grau}</span>`;
+                item.addEventListener('click', () => { riscosLayer.eachLayer(layer => { if (layer.feature.properties.setor_id === props.setor_id) selectRiscoFeature(f, layer); }); });
+                listContainer.appendChild(item);
+            });
+        }
+
+        document.getElementById('tab-bairros').addEventListener('click', () => {
+            if (activeTab === 'bairros') return;
+            activeTab = 'bairros';
+            document.getElementById('tab-bairros').classList.add('active');
+            document.getElementById('tab-riscos').classList.remove('active');
+            if (riscosLayer) map.removeLayer(riscosLayer);
+            geojsonLayer.setStyle(getStyle);
+            geojsonLayer.eachLayer(layer => {
+                if (layer.feature.properties.is_background) return;
+                layer.on({ mouseover: highlightFeature, mouseout: resetHighlight, click: (e) => selectFeature(layer.feature, layer) });
+            });
+            document.getElementById('search').placeholder = 'Buscar bairro ou ilha...';
+            document.getElementById('search').value = '';
+            selectedRiscoLayer = null;
+            document.getElementById('infoPanel').style.display = 'none';
+            renderList(sortedFeatures);
+            map.fitBounds(geojsonLayer.getBounds(), { padding: [40, 40] });
+        });
+
+        document.getElementById('tab-riscos').addEventListener('click', () => {
+            if (activeTab === 'riscos') return;
+            activeTab = 'riscos';
+            document.getElementById('tab-riscos').classList.add('active');
+            document.getElementById('tab-bairros').classList.remove('active');
+            geojsonLayer.setStyle(getStyle);
+            geojsonLayer.eachLayer(layer => layer.off('mouseover mouseout click'));
+            if (!riscosLayer) riscosLayer = L.geoJSON(RISCOS_GEOJSON, { style: getRiscoStyle, onEachFeature: onEachRiscoFeature });
+            riscosLayer.addTo(map);
+            document.getElementById('search').placeholder = 'Buscar área ou tipologia...';
+            document.getElementById('search').value = '';
+            selectedLayer = null;
+            document.getElementById('infoPanel').style.display = 'none';
+            renderRiscoList(sortedRiscos);
+            map.fitBounds(riscosLayer.getBounds(), { padding: [40, 40] });
+        });
+
+        document.getElementById('search').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (activeTab === 'bairros') {
+                renderList(sortedFeatures.filter(f => f.properties.bairro_nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(query) || f.properties.bairro_id.toLowerCase().includes(query)));
+            } else {
+                renderRiscoList(sortedRiscos.filter(f => f.properties.bairro_nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(query) || f.properties.setor_id.toLowerCase().includes(query) || (f.properties.tipologia || '').toLowerCase().includes(query)));
+            }
+        });
+    </script>
+</body>
+</html>
