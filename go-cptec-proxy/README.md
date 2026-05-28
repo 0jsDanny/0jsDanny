@@ -1,0 +1,102 @@
+# CPTEC/INPE Proxy & Fallback Service (go-cptec-proxy)
+
+A high-performance Go microservice that acts as a proxy for the official weather and oceanographic services of **CPTEC/INPE (Centro de Previsão de Tempo e Estudos Climáticos)**. It translates raw CPTEC XML responses into the unified JSON format exposed by the popular **BrasilAPI** service, offering an automatic transparent fallback to BrasilAPI in case the primary CPTEC endpoints experience instability.
+
+## 🚀 Key Features
+
+*   **100% Go Standard Library**: No bloated routing or client dependencies. Leverages Go 1.22's native `http.ServeMux` for path parameter parsing (`r.PathValue`).
+*   **Encodings Translation**: Parses CPTEC's legacy `ISO-8859-1` XML feeds and safely normalizes values to UTF-8 without external charset mapping packages.
+*   **Resilient Fallback (High Availability)**: Detects network failures, timeouts, and HTTP errors from CPTEC and automatically redirects the request to BrasilAPI.
+*   **Thread-Safe Memory Caching**: Employs an in-memory caching mechanism (`sync.RWMutex`) with configurable TTL to improve performance and protect external APIs from rate limits.
+*   **Rich Schema Mapping**: Mappping CPTEC weather acronyms (`ps`, `pc`, etc.) and wind/wave direction codes (e.g. `ESE` -> `Lés-sudeste`) to matched strings in BrasilAPI.
+
+---
+
+## 🗺️ API Documentation
+
+All routes expose JSON responses matching the schema format of BrasilAPI:
+
+| Route | Description | CPTEC Source |
+| :--- | :--- | :--- |
+| `GET /health` | Health Check | Internal state |
+| `GET /api/cptec/v1/cidade` | List all cataloged cities | BrasilAPI Proxy (no full XML list exist in CPTEC) |
+| `GET /api/cptec/v1/cidade/{cityName}` | Search cities by name | `/XML/listaCidades?city={cityName}` |
+| `GET /api/cptec/v1/clima/capital` | Current conditions in all state capitals | `/XML/capitais/condicoesAtuais.xml` |
+| `GET /api/cptec/v1/clima/aeroporto/{icaoCode}` | Current conditions for an airport ICAO code | `/XML/estacao/{icaoCode}/condicoesAtuais.xml` |
+| `GET /api/cptec/v1/clima/previsao/{cityCode}` | Weather forecast for the next day | `/XML/cidade/{cityCode}/previsao.xml` |
+| `GET /api/cptec/v1/clima/previsao/{cityCode}/{days}` | Weather forecast for up to 6 days | `/XML/cidade/7dias/{cityCode}/previsao.xml` |
+| `GET /api/cptec/v1/clima/previsao/semana/{lat}/{long}` | Forecast near coordinates (up to 7 days) | `/XML/cidade/7dias/{lat}/{long}/previsaoLatLon.xml` |
+| `GET /api/cptec/v1/ondas/{cityCode}` | Ocean wave prediction for today | `/XML/cidade/{cityCode}/dia/0/ondas.xml` |
+| `GET /api/cptec/v1/ondas/{cityCode}/{days}` | Ocean wave prediction for up to 6 days | `/XML/cidade/{cityCode}/todos/tempos/ondas.xml` |
+
+---
+
+## 🛠️ Architecture and Internals
+
+### Custom ISO-8859-1 XML Decoder
+To decode Latin1 characters (e.g., `ã`, `é`) without third-party libraries, the service converts CPTEC's response bytes directly by casting code points:
+```go
+func ISO88591ToUTF8(isoBytes []byte) []byte {
+    buf := make([]rune, len(isoBytes))
+    for i, b := range isoBytes {
+        buf[i] = rune(b)
+    }
+    return []byte(string(buf))
+}
+```
+This is paired with custom XML decoder charset readers:
+```go
+dec := xml.NewDecoder(bytes.NewReader(utf8Bytes))
+dec.CharsetReader = func(charset string, input io.Reader) (io.Reader, error) {
+    return input, nil
+}
+```
+
+### Transparent Resilient Routing
+Requests flow as follows:
+```
+  [ Client Request ]
+         │
+         ▼
+ ┌──────────────┐      Found?     ┌───────────────────────┐
+ │ Memory Cache │ ──────────────> │ Return Cached JSON    │
+ └──────────────┘                 └───────────────────────┘
+         │ Miss
+         ▼
+ ┌──────────────┐      Success    ┌───────────────────────┐
+ │  CPTEC XML   │ ──────────────> │ Parse XML -> Save ->  │
+ │   Service    │                 │ Return Unified JSON   │
+ └──────────────┘                 └───────────────────────┘
+         │ Fail (Timeout / Error)
+         ▼
+ ┌──────────────┐      Success    ┌───────────────────────┐
+ │  BrasilAPI   │ ──────────────> │ Decode JSON -> Save   │
+ │   Fallback   │                 │ -> Return JSON        │
+ └──────────────┘                 └───────────────────────┘
+         │ Fail
+         ▼
+  [ 404 / 500 JSON Error ]
+```
+
+---
+
+## ⚡ Running & Testing
+
+### Requirements
+*   Go 1.22 or higher
+
+### Environment Variables
+*   `PORT`: Port to listen on (default: `8080`).
+*   `CPTEC_API_URL`: Custom base URL for CPTEC INPE XML (default: `http://servicos.cptec.inpe.br`).
+*   `BRASILAPI_URL`: Custom base URL for BrasilAPI (default: `https://brasilapi.com.br`).
+
+### Run the Server
+```bash
+go run .
+```
+
+### Run Tests
+The test suite utilizes mock HTTP servers for both CPTEC and BrasilAPI to execute completely offline:
+```bash
+go test -v ./...
+```
