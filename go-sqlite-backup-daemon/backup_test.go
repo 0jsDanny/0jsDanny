@@ -47,11 +47,7 @@ func TestWatcherAndUploader(t *testing.T) {
 	go watcher.Start(ctx)
 	go uploader.Start(ctx)
 
-	// Await initial full backup trigger
-	select {
-	case <-time.After(200 * time.Millisecond):
-		// Done polling
-	}
+	time.Sleep(200 * time.Millisecond)
 
 	// Verify local vault has full backup gzip
 	files, err := os.ReadDir(vaultDir)
