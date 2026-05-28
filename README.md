@@ -33,6 +33,7 @@ Below is a catalog of the modules, patterns, and case studies included in this r
 | **Go Engineering** | [go-event-adapter-pattern](./go-event-adapter-pattern) | `Go` | Event-driven webhook adapter, payload normalization, exponential backoff, Dead Letter Queue (DLQ). |
 | **Go Engineering** | [go-redis-cache-patterns](./go-redis-cache-patterns) | `Go` `Redis` | Type-safe Cache-Aside implementation using Go Generics, atomic distributed locks via Lua scripts. |
 | **Go Engineering** | [go-n8n-webhook-validator](./go-n8n-webhook-validator) | `Go` | Security middleware, HMAC-SHA256 signature verification, timing-attack mitigation (`ConstantTimeCompare`). |
+| **Go Engineering** | [go-cnpj-prospector](./go-cnpj-prospector) | `Go` | Multi-API fallback proxy, numeric & alphanumeric CNPJ validation (COCAD 01/2024), thread-safe memory cache. |
 | **Backend Engineering** | [python-siat-cache-proxy](./python-siat-cache-proxy) | `Python` `FastAPI` `SQLite` | Sidecar caching proxy, Cache-Aside pattern (infinite paid cache vs 15-min TTL), SQLite WAL optimization, LGPD log privacy by design. |
 | **Data Engineering** | [receita-federal-cnpj-miner](./receita-federal-cnpj-miner) | `Python` `SQLite` | Streaming parsing of large-scale CSVs, spelling normalizations, checkpoint/resume mechanics, MEI detection. |
 | **Data Engineering** | [node-etl-migration-scripts](./node-etl-migration-scripts) | `Node.js` | Batch ETL pipeline for PocketBase, resumable database synchronization using mapping states. |
