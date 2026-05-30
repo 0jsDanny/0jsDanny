@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactical GHDB Map Explorer</title>
+    <!-- Google Fonts: Share Tech Mono (Display) & Plus Jakarta Sans (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS (via CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"Share Tech Mono"', 'monospace'],
+                    },
+                    colors: {
+                        cyber: {
+                            bg: '#05070B',
+                            card: '#0A0F1D',
+                            accent: '#00FF9D', /* Neon Mint */
+                            accentGlow: 'rgba(0, 255, 157, 0.15)',
+                            text: '#E2E8F0',
+                            muted: '#64748B',
+                            border: '#1E293B',
+                            danger: '#FF4A4A',
+                            warning: '#FFB800',
+                            info: '#00E0FF',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --accent: #00FF9D;
+            --cyber-bg: #05070B;
+        }
+        body {
+            background-color: var(--cyber-bg);
+            color: #E2E8F0;
+            overflow-x: hidden;
+        }
+        /* Grid de fundo cibernético */
+        .cyber-grid {
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(30, 41, 59, 0.4) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(30, 41, 59, 0.4) 1px, transparent 1px);
+        }
+        /* Efeito Scanlines CRT clássico */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.03),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.03)
+            );
+            background-size: 100% 4px, 6px 100%;
+            z-index: 999;
+            pointer-events: none;
+        }
+        /* Efeito de brilho de terminal */
+        .neon-glow-border {
+            box-shadow: 0 0 10px rgba(0, 255, 157, 0.05);
+            border-color: #1E293B;
+            transition: all 0.3s ease;
+        }
+        .neon-glow-border:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.2);
+            border-color: var(--accent);
+        }
+        /* Animações de Staggered Reveal */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .reveal-item {
+            opacity: 0;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        .reveal-1 { animation-delay: 0.1s; }
+        .reveal-2 { animation-delay: 0.2s; }
+        .reveal-3 { animation-delay: 0.3s; }
+        .reveal-4 { animation-delay: 0.4s; }
+
+        /* Scrollbar customizada e temática */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #05070B;
+            border-left: 1px solid #1E293B;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1E293B;
+            border: 1px solid #05070B;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00FF9D;
+        }
+        
+        /* Firefox fallback */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #1E293B #05070B;
+        }
+    </style>
+</head>
+<body class="cyber-grid min-h-screen flex flex-col font-sans relative">
+    <!-- Overlay de Efeito CRT -->
+    <div class="scanlines"></div>
+
+    <!-- Header -->
+    <header class="border-b border-cyber-border bg-cyber-card/75 backdrop-blur-md sticky top-0 z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <!-- Logotipo Terminal / Retro -->
+                <div class="w-10 h-10 bg-black flex items-center justify-center border-2 border-cyber-accent animate-pulse shadow-[0_0_10px_rgba(0,255,157,0.3)]">
+                    <span class="text-cyber-accent font-bold text-lg font-mono">&gt;_</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wider text-white font-mono flex items-center gap-2">
+                        GHDB // <span class="text-cyber-accent">TACTICAL.MAP</span>
+                    </h1>
+                    <p class="text-[10px] uppercase tracking-widest text-cyber-muted font-mono">Indexador de Vulnerabilidades Passivas</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 font-mono">
+                <span class="text-xs bg-black px-3 py-1.5 border border-cyber-border text-cyber-muted">
+                    STATUS: <span class="text-cyber-accent">CONNECTED</span> // DORKS: <strong id="total-dorks-counter" class="text-white font-bold">7944</strong>
+                </span>
+                <a href="../index.html" class="text-xs border border-cyber-muted/30 px-3 py-1.5 hover:bg-white hover:text-black transition-all">
+                    EXIT
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+        
+        <!-- Hero Section Asimétrica -->
+        <section class="reveal-item reveal-1 relative border-l-4 border-2 border-cyber-border border-l-cyber-accent bg-black p-6 sm:p-8 overflow-hidden shadow-2xl">
+            <!-- Aranha ASCII temática de Segurança no canto direito -->
+            <pre class="absolute right-6 top-4 text-[7px] sm:text-[9px] leading-none text-cyber-accent/65 drop-shadow-[0_0_6px_rgba(0,255,157,0.3)] font-mono select-none pointer-events-none hidden lg:block">
+           ____                      ,
+          /---.'.__             ____//
+               '--.\           /.---'
+          _______  \\         //
+        /.------.\  \|      .'/  ______
+       //  ___  \ \ ||/|\  //  _/_----.\__
+      |/  /.-.\  \ \:|< >|// _/.'..\   '--'
+         //   \'. | \'.|.'/ /_/ /  \\
+        //     \ \_\/" ' ~\-'.-'    \\
+       //       '-._| :H: |'-.__     \\
+      //           (/'==='\)'-._\     ||
+      ||                        \\    \|
+      ||                         \\    '
+snd   |/                          \\
+                                   ||
+                                   ||
+                                   \\
+                                    '
+            </pre>
+            <div class="absolute right-0 bottom-0 text-[120px] font-mono font-bold text-cyber-border/10 select-none pointer-events-none translate-y-12 translate-x-12">
+                OSINT
+            </div>
+            <div class="relative z-10 max-w-3xl">
+                <span class="text-xs uppercase tracking-widest text-cyber-accent font-bold font-mono px-2 py-1 bg-cyber-accent/10 border border-cyber-accent/30">
+                    SISTEMA DE AUDITORIA PASSIVA
+                </span>
+                <h2 class="text-3xl sm:text-4xl font-mono font-bold text-white mt-4 tracking-tight uppercase">
+                    Google Hacking Database Explorer
+                </h2>
+                <p class="text-cyber-muted mt-4 text-sm sm:text-base leading-relaxed font-sans">
+                    Painel didático desenvolvido para auditar a exposição de diretórios, credenciais e servidores. As dorks agem como espelhos de segurança, apontando aquilo que está indexado incorretamente nas buscas do Google.
+                </p>
+                
+                <div class="mt-6 flex flex-wrap gap-4 items-center text-[10px] font-mono text-cyber-muted border-t border-cyber-border/50 pt-6">
+                    <span class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyber-accent"></span>
+                        DB: GITLAB.EXPLOIT-DATABASE
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyber-info"></span>
+                        LOCATOR: INDEX-FILTERS
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyber-warning"></span>
+                        MITIGATION: ACTIVE DEFENSE
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção do Mapa do Site e Categorias -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Lista das 14 Categorias -->
+            <div class="reveal-item reveal-2 lg:col-span-1 flex flex-col gap-4">
+                <div class="flex justify-between items-center border-b border-cyber-border pb-2">
+                    <h3 class="font-mono font-bold text-sm text-white uppercase tracking-wider">Caminhos do Sistema</h3>
+                    <span class="text-xs text-cyber-accent font-mono" id="categories-count">0 categorias</span>
+                </div>
+                <div class="flex flex-col gap-2 overflow-y-auto max-h-[600px] pr-2 scrollbar-thin" id="categories-list">
+                    <div class="animate-pulse bg-cyber-card h-14 rounded-none border border-cyber-border"></div>
+                    <div class="animate-pulse bg-cyber-card h-14 rounded-none border border-cyber-border"></div>
+                    <div class="animate-pulse bg-cyber-card h-14 rounded-none border border-cyber-border"></div>
+                </div>
+            </div>
+
+            <!-- Visualizador de Detalhes da Categoria Selecionada -->
+            <div class="reveal-item reveal-3 lg:col-span-2 flex flex-col gap-6">
+                <div class="border border-cyber-border bg-cyber-card p-6 min-h-[400px] flex flex-col justify-between" id="detail-panel">
+                    <!-- Estado Inicial -->
+                    <div class="flex-1 flex flex-col items-center justify-center text-center p-8 font-mono">
+                        <div class="w-16 h-16 border border-cyber-border bg-black flex items-center justify-center text-cyber-accent text-2xl mb-4 shadow-[0_0_15px_rgba(0,255,157,0.1)]">
+                            &gt;_
+                        </div>
+                        <h4 class="text-sm font-bold text-white uppercase tracking-widest">SELECIONE UM CAMINHO PARA EXPLORAR</h4>
+                        <p class="text-xs text-cyber-muted max-w-sm mt-3 font-sans leading-relaxed">
+                            Clique em uma das rotas operacionais à esquerda para visualizar análises de risco de severidade, guias de mitigação técnica e dorks extraídas diretamente do XML.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Disclaimer de Segurança -->
+        <section class="reveal-item reveal-4 border border-cyber-border bg-black/60 p-6 text-xs text-cyber-muted flex flex-col sm:flex-row gap-4 items-start font-mono">
+            <div class="w-8 h-8 bg-cyber-danger/10 border border-cyber-danger/30 flex items-center justify-center text-cyber-danger font-bold text-lg flex-shrink-0">
+                !
+            </div>
+            <div>
+                <h4 class="font-bold text-white mb-1 uppercase tracking-wider">PROTOCOLO DE SEGURANÇA E CONFORMIDADE ÉTICA</h4>
+                <p class="leading-relaxed font-sans text-xs">
+                    Esta ferramenta é estritamente de caráter educacional e demonstrativo. O Google Hacking Database é um recurso de segurança defensiva projetado para identificação proativa de vazamento de credenciais e exposições acidentais de servidores. O uso indevido dessas consultas constitui ato hostil e ilegal. Desenvolvido para proteção e auditoria autorizada.
+                </p>
+            </div>
+        </section>
+        
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-cyber-border py-6 text-center text-xs text-cyber-muted font-mono">
+        <p>SYSTEM MAPPER // OPERATOR: DANIEL S. DE JESUS // © 2026</p>
+    </footer>
+
+    <!-- Injeção dos dados consolidados -->
+    <script src="ghdb_data.js"></script>
+
+    <!-- Lógica de interatividade do Dashboard -->
+    <script>
+        const impactStyles = {
+            "Crítico": "bg-red-500/10 text-red-500 border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.1)]",
+            "Alto": "bg-orange-500/10 text-orange-500 border border-orange-500/30",
+            "Médio": "bg-amber-500/10 text-amber-500 border border-amber-500/30",
+            "Baixo": "bg-blue-500/10 text-blue-500 border border-blue-500/30",
+            "Variável": "bg-gray-500/10 text-gray-500 border border-gray-500/30"
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof GHDB_DATA === 'undefined') {
+                console.error("Erro: Dados do GHDB não foram carregados.");
+                return;
+            }
+
+            document.getElementById("total-dorks-counter").innerText = GHDB_DATA.total_dorks;
+            
+            const categories = Object.keys(GHDB_DATA.categories);
+            document.getElementById("categories-count").innerText = `[${categories.length} ROTAS]`;
+
+            const categoriesList = document.getElementById("categories-list");
+            categoriesList.innerHTML = "";
+
+            categories.forEach(catKey => {
+                const cat = GHDB_DATA.categories[catKey];
+                const card = document.createElement("button");
+                card.className = "w-full text-left p-4 border border-cyber-border bg-cyber-card/40 neon-glow-border transition-all duration-200 flex justify-between items-center hover:bg-black group";
+                card.onclick = () => selectCategory(catKey);
+                
+                card.innerHTML = `
+                    <div class="flex flex-col gap-1 pr-4">
+                        <span class="text-sm font-semibold font-mono text-white group-hover:text-cyber-accent transition-colors">${cat.title_pt}</span>
+                        <span class="text-xs text-cyber-muted font-sans line-clamp-1">${cat.desc}</span>
+                    </div>
+                    <div class="flex flex-col items-end gap-1.5 flex-shrink-0 font-mono">
+                        <span class="text-xs font-bold bg-black border border-cyber-border px-2 py-0.5 text-white">${cat.count}</span>
+                        <span class="text-[9px] tracking-wider px-1.5 py-0.5 rounded-none font-bold ${impactStyles[cat.impact] || 'bg-gray-500/10'}">${cat.impact}</span>
+                    </div>
+                `;
+                categoriesList.appendChild(card);
+            });
+        });
+
+        function selectCategory(catKey) {
+            const cat = GHDB_DATA.categories[catKey];
+            const detailPanel = document.getElementById("detail-panel");
+
+            let dorksRows = "";
+            cat.dorks_sample.forEach(d => {
+                const escapedQuery = d.query.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                const escapedDesc = d.desc.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                
+                dorksRows += `
+                    <tr class="border-b border-cyber-border hover:bg-cyber-border/20 transition-colors font-mono">
+                        <td class="px-4 py-3 text-xs text-cyber-accent break-all select-all font-semibold bg-black/45 border-r border-cyber-border">${escapedQuery}</td>
+                        <td class="px-4 py-3 text-xs text-cyber-muted max-w-xs break-words font-sans">${escapedDesc || 'Sem descrição cadastrada.'}</td>
+                        <td class="px-4 py-3 text-xs text-cyber-muted whitespace-nowrap">${d.date}</td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex gap-2 justify-end">
+                                <a href="https://www.google.com/search?q=${encodeURIComponent(d.query)}" target="_blank" rel="noopener noreferrer" class="text-[10px] bg-cyber-accent/15 border border-cyber-accent text-cyber-accent hover:bg-cyber-accent hover:text-black font-bold px-2 py-1 transition-all uppercase tracking-wider">
+                                    TEST
+                                </a>
+                                <a href="${d.link}" target="_blank" rel="noopener noreferrer" class="text-[10px] text-cyber-muted hover:text-white px-1.5 py-1 uppercase border border-transparent hover:border-cyber-border">
+                                    EDB
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            detailPanel.innerHTML = `
+                <div class="flex flex-col gap-6">
+                    
+                    <!-- Cabeçalho da Categoria -->
+                    <div class="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-cyber-border pb-4 font-mono">
+                        <div>
+                            <span class="text-xs text-cyber-muted">ID_REF: ${catKey}</span>
+                            <h3 class="text-xl font-bold text-white mt-1 uppercase tracking-wide">${cat.title_pt}</h3>
+                            <p class="text-xs text-cyber-muted mt-2 font-sans leading-relaxed">${cat.desc}</p>
+                        </div>
+                        <div class="flex flex-col items-start sm:items-end gap-1 flex-shrink-0">
+                            <span class="text-[9px] text-cyber-muted uppercase tracking-wider">GRAVIDADE</span>
+                            <span class="text-xs uppercase tracking-wider px-2.5 py-1 rounded-none font-bold ${impactStyles[cat.impact]}">${cat.impact}</span>
+                        </div>
+                    </div>
+
+                    <!-- Bloco de Mitigação -->
+                    <div class="p-4 border-l-2 border border-cyber-accent/40 bg-black/60 flex gap-3 items-start">
+                        <div class="text-cyber-accent text-sm font-mono mt-0.5">🛡️</div>
+                        <div class="font-mono">
+                            <h4 class="text-[10px] font-bold text-white uppercase tracking-wider">RECOMENDAÇÃO DE MITIGAÇÃO:</h4>
+                            <p class="text-xs text-cyber-muted mt-1 leading-relaxed font-sans">${cat.mitigation}</p>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Dorks de Amostra -->
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between items-center font-mono">
+                            <h4 class="text-xs font-bold text-white uppercase tracking-wider">AMOSTRAGEM Operacional (TOP ${cat.dorks_sample.length})</h4>
+                            <span class="text-[9px] text-cyber-accent uppercase tracking-widest font-bold">ESTADO LOCAL</span>
+                        </div>
+                        <div class="overflow-x-auto border border-cyber-border bg-black">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-cyber-card/60 border-b border-cyber-border text-[9px] text-cyber-muted uppercase tracking-wider font-bold font-mono">
+                                        <th class="px-4 py-3 border-r border-cyber-border">CONSULTA (DORK)</th>
+                                        <th class="px-4 py-3">DESCRIÇÃO E INTRUSÃO</th>
+                                        <th class="px-4 py-3">DATA</th>
+                                        <th class="px-4 py-3 text-right">AUDITORIA</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dorksRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
+ </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

@@ -42,6 +42,10 @@ Engenheiro de Software baseado em Belém, Brasil. Construo sistemas de produçã
 
 **[visabelem.net](https://visabelem.net)** — Public digital services platform for the Sanitary Surveillance of Belém (SESMA). Handles business licensing, health inspections, and municipal fee collection. Solo-built and deployed on a Contabo VPS + IDrive e2 (S3-compatible) + Amazon SES. Source is closed by municipal contract.
 
+**[cisc-situation-room](./cisc-situation-room)** — Interactive Situation Room dashboard (Videowall) for the Health and Climate Information Center of Belém (CISC), mapping multi-sector alerts (epidemiological, meteorological, water levels, sanitary compliance) and generating community educational bulletins.
+
+**[cisc-data-pipelines](./cisc-data-pipelines)** — Health and climate ETL pipelines (SINAN, INMET, CEMADEN, Navy tides), statistical anomaly models (CUSUM, Spearman lag, logistic regression), and SQL database schemas developed for the CISC Belém health-climate platform (LGPD compliant - raw database and private case files omitted).
+
 **[visabelem-mock](https://github.com/0jsDanny/visabelem-mock)** — Interface prototype built before the backend existed, to get stakeholder buy-in from city managers. React + Vite + TypeScript + Tailwind. Covers the triage flow, business portal, and operational dashboard.
 
 **[visabelem-architecture-case-study](https://github.com/0jsDanny/visabelem-architecture-case-study)** — Technical deep-dive into the architectural decisions: Modular Monolith vs. microservices, SQLite → PostgreSQL migration playbook, legacy SIAT tax system integration, LGPD-compliant data handling for citizen PII, and layered security model.
@@ -58,6 +62,16 @@ Engenheiro de Software baseado em Belém, Brasil. Construo sistemas de produçã
 
 **[go-n8n-webhook-validator](https://github.com/0jsDanny/go-n8n-webhook-validator)** — HTTP middleware for HMAC-SHA256 webhook signature validation. Guards against timing attacks via `subtle.ConstantTimeCompare` and correctly handles the HTTP request body read state. Used in production to authenticate n8n orchestrator callbacks.
 
+**[go-cnpj-prospector](https://github.com/0jsDanny/go-cnpj-prospector)** — High-availability CNPJ querying service in Go. Integrates multi-API fallbacks (ReceitaWS, BrasilAPI, local DB), thread-safe memory caching, and COCAD 01/2024 compliance.
+
+**[go-sqlite-backup-daemon](https://github.com/0jsDanny/go-sqlite-backup-daemon)** — Resilient disaster recovery daemon written in Go. Monitores WAL file generation, ships compressed backups (gzip) to S3-compatible storage, and handles network retry failures gracefully.
+
+**[go-pdf-signer](https://github.com/0jsDanny/go-pdf-signer)** — Cryptographic PDF signing microservice in Go. Implements PAdES-compliant digital signatures, ByteRange hashing, PKCS#12 certificate parsing, and signature verification.
+
+**[go-audit-trail-middleware](https://github.com/0jsDanny/go-audit-trail-middleware)** — HTTP middleware in Go for tamper-evident activity logging. Generates HMAC-SHA256 authenticated log entries for LGPD compliance in an append-only structure.
+
+**[go-cptec-proxy](https://github.com/0jsDanny/go-cptec-proxy)** — Go proxy service for the CPTEC/INPE meteorological XML API. Translates ISO-8859-1 encodings, normalizes payloads to JSON, and implements thread-safe memory caching with fallbacks.
+
 ---
 
 ## 📊 Data Engineering
@@ -67,6 +81,16 @@ Engenheiro de Software baseado em Belém, Brasil. Construo sistemas de produçã
 **[receita-federal-cnpj-miner](https://github.com/0jsDanny/receita-federal-cnpj-miner)** — Python pipeline that downloads and processes the full Brazilian Federal Revenue CNPJ dataset (gigabytes of ZIP/CSV), extracting only active businesses from a target municipality. Streaming processing to avoid OOM, phase checkpointing, and optimized relational modeling in SQLite.
 
 **[belem-geospatial-viz](https://github.com/0jsDanny/belem-geospatial-viz)** — Geospatial data processing (GeoPandas, Shapely) to extract and repair geographic polygons from the Overpass API (OpenStreetMap), exported to GeoJSON. React + Apache ECharts frontend renders high-performance interactive choropleth maps.
+
+**[belem-geospatial-risk-mapping](https://github.com/0jsDanny/belem-geospatial-risk-mapping)** — Python spatial data mining pipeline. Extracts UTM coordinates from CPRM/Defesa Civil risk map PDFs using linear regressions (`polyfit`), cleans geometry shapes, and plots active landslide/flood risk sectors in a Leaflet map.
+
+**[python-siat-cache-proxy](https://github.com/0jsDanny/python-siat-cache-proxy)** — High-performance sidecar caching proxy for the municipal tax system (SIAT). Implements Cache-Aside, WAL-shipping, and LGPD-compliant data masking using Python, FastAPI, and SQLite.
+
+**[cptec-data-catalogs](https://github.com/0jsDanny/cptec-data-catalogs)** — Data dictionary and mapping specification of meteorological repositories at CPTEC/INPE. Simplified schemas for wave forecasts, precipitation data, and weather forecasts.
+
+**[react-health-dashboard-poc](https://github.com/0jsDanny/react-health-dashboard-poc)** — High-fidelity healthcare monitoring dashboard built with React and TypeScript. Demonstrates SOLID component design, custom hooks for real-time telemetry, and modular widgets.
+
+**[ghdb-map-generator](./ghdb-map-generator) (OSINT & Security)** — Passive OSINT audit tool. Includes a Python ETL pipeline that processes 5.5MB of ZIP-compressed Google Hacking Database XML data and outputs a highly optimized, interactive HTML/JS tactical dashboard in Portuguese.
 
 ---
 

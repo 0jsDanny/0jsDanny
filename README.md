@@ -46,10 +46,13 @@ Below is a catalog of the modules, patterns, and case studies included in this r
 | **GIS & Frontend** | [belem-geospatial-viz](./belem-geospatial-viz) | `React` `Leaflet` `ECharts` | Overpass API polygon repair (Shapely), canvas markers, interactive choropleth map. |
 | **GIS & Frontend** | [react-health-dashboard-poc](./react-health-dashboard-poc) | `React` `TS` | High-performance dashboard widgets, SOLID component design, real-time indicator simulations. |
 | **GIS & Frontend** | [visabelem-mock](./visabelem-mock) | `React` `TS` `Tailwind` | High-fidelity interactive prototype for stakeholder alignment, dual citizen/admin portal flows, and animated transitions. |
+| **Public Health & GIS** | [cisc-situation-room](./cisc-situation-room) | `HTML` `JS` `Tailwind` | Interactive Situation Room dashboard (Videowall) mapping multi-sector alerts (epidemiological, meteorological, water levels) and dispatching community educational bulletins. |
+| **Data Engineering** | [cisc-data-pipelines](./cisc-data-pipelines) | `Python` `SQLite` `SQL` | Health and climate ETL pipelines (SINAN, INMET, CEMADEN, Navy tides), statistical anomaly models (CUSUM, Spearman lag, logistic regression), and SQL database schemas (LGPD compliant - raw data omitted). |
+| **Security & Data** | [ghdb-map-generator](./ghdb-map-generator) | `Python` `HTML` `JS` | ETL pipeline processing large XML datasets (5.5MB) from ZIP files to generate an interactive tactical dashboard, demonstrating practical OSINT and vulnerability testing proficiency as a hobby. |
 
 ---
 
-> **Open Source Scope:** The repositories in this workspace are independently authored demonstrations and extracted architectural patterns. The production government system (`visabelem.net`) is closed-source under municipal contract. No proprietary government data, classified municipal assets, or production source code have been published.
+> **Open Source Scope:** The repositories in this workspace are independently authored demonstrations and extracted architectural patterns. The production government system is closed-source under municipal contract. No proprietary government data, classified municipal assets, or production source code have been published.
 
 ---
 

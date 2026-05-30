@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sala de Situação CISC - Antecipação e Resposta Belém</title>
+
+
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+
+    <!-- Leaflet & ApexCharts -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Shared Design Tokens & local styles -->
+    <link rel="stylesheet" href="../cisc-assets/cisc-design-tokens.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- SVG Gradients for Map -->
+    <header class="situation-header">
+        <div class="header-left">
+            <div class="system-title">
+                <img src="../cisc-assets/cisc_vector.svg" alt="Logo CISC" class="h-6 w-auto mr-3 inline-block align-middle">
+                CISC <span class="font-light">BELÉM</span>
+                <span class="text-dim font-thin mx-2">|</span>
+                <span class="text-sm tracking-widest font-semibold text-dim">SALA DE SITUAÇÃO</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <!-- Theme Toggle & Alert Level -->
+            <div class="hidden xl:flex items-center gap-4 border-l border-white/10 pl-6 ml-4 group">
+                <div class="text-right">
+                    <div class="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-none mb-1">Nível
+                        de Alerta Geral</div>
+                    <div class="text-sm font-black text-red-500 flex items-center justify-end gap-2 mb-1">
+                        <span class="relative flex h-2 w-2">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                        </span>
+                        ESTADO DE EMERGÊNCIA
+                    </div>
+                    <!-- Mini Axis Indicators -->
+                    <div class="flex items-center justify-end gap-2.5 opacity-90">
+                        <i class="ph ph-heartbeat text-red-500 text-[10px]"
+                            title="Vigilância de Saúde: EMERGÊNCIA"></i>
+                        <i class="ph ph-microscope text-green-500 text-[10px]"
+                            title="Vigilância Sanitária: NORMAL"></i>
+                        <i class="ph ph-cloud-sun text-yellow-400 text-[10px]"
+                            title="Inteligência Meteo: ATENÇÃO"></i>
+                        <i class="ph ph-waves text-orange-500 text-[10px]" title="Monitoramento Hidro: ALERTA"></i>
+                    </div>
+                </div>
+                <div
+                    class="w-12 h-12 rounded-xl border border-red-700 flex items-center justify-center transition-all duration-500 emergency-flash">
+                    <i class="ph ph-nuclear text-white text-lg"></i>
+                </div>
+            </div>
+
+            <div class="text-right border-l border-white/10 pl-6">
+                <div class="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-none mb-1">Status do
+                    Airflow</div>
+                <div class="text-xs font-bold text-green-400 flex items-center justify-end gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> SINCRONIZADO
+                </div>
+                <div class="text-[9px] text-slate-500 font-mono mt-0.5 tracking-tighter opacity-70">
+                    UPTIME: <span id="airflow-uptime">24:12:05</span>
+                </div>
+            </div>
+            <div class="text-right border-l border-white/10 pl-6">
+                <div id="clock" class="font-mono text-xl font-bold text-white tracking-tighter">09:30:51</div>
+                <div class="text-[13px] text-dim uppercase">03 MAIO 2026</div>
+            </div>
+            <style>
+                body.light-theme #clock {
+                    color: var(--text-main) !important;
+                }
+
+                body.light-theme .system-title {
+                    color: var(--text-main) !important;
+                }
+            </style>
+            <div class="flex items-center gap-4">
+                <!-- Dropdown de Navegação do Portal -->
+                <div class="relative group">
+                    <button class="p-2 bg-slate-800/5 hover:bg-slate-800/10 rounded border border-white/10 text-xs text-dim transition-all flex items-center gap-2 cursor-pointer">
+                        <i class="ph ph-list"></i> Navegar Portal <i class="ph ph-caret-down text-[8px] opacity-75"></i>
+                    </button>
+                    <div class="absolute right-0 mt-2 w-64 rounded-xl bg-slate-900/95 border border-white/10 p-2 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999] flex flex-col gap-1 backdrop-blur-md text-left">
+                        <div class="text-[9px] font-black uppercase text-slate-500 tracking-wider px-3 py-1.5 border-b border-white/5 mb-1">
+                            Documentação
+                        </div>
+                        <a href="../index.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-white/5 hover:text-sky-400 transition-all no-underline">
+                            <i class="ph ph-house w-4 text-center"></i> Início / Visão Geral
+                        </a>
+                        <a href="../etl_arquitetura.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-white/5 hover:text-sky-400 transition-all no-underline">
+                            <i class="ph ph-graph w-4 text-center"></i> Arquitetura Core
+                        </a>
+                        <a href="../schema_linkage.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-white/5 hover:text-sky-400 transition-all no-underline">
+                            <i class="ph ph-database w-4 text-center"></i> Schema PostGIS
+                        </a>
+                        <a href="../cisc_framework_estatistico.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-white/5 hover:text-sky-400 transition-all no-underline">
+                            <i class="ph ph-calculator w-4 text-center"></i> Framework Estatístico
+                        </a>
+                        
+                        <div class="text-[9px] font-black uppercase text-slate-500 tracking-wider px-3 py-1.5 border-b border-white/5 mt-2 mb-1">
+                            Análises &amp; BD (Devs)
+                        </div>
+                        <a href="../db_devs/cisc_relatorio_visual.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-white/5 hover:text-sky-400 transition-all no-underline">
+                            <i class="ph ph-chart-bar w-4 text-center"></i> Relatório Epidemiológico
+                        </a>
+                        <a href="../db_devs/cisc_analise_correlacao.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-white/5 hover:text-sky-400 transition-all no-underline">
+                            <i class="ph ph-brain w-4 text-center"></i> Correlação &amp; ML
+                        </a>
+                        <a href="../db_devs/cisc_schema_viewer.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-white/5 hover:text-sky-400 transition-all no-underline">
+                            <i class="ph ph-graph w-4 text-center"></i> Esquema BD SQLite
+                        </a>
+                        <a href="../db_devs/auditoria_fontes.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-300 hover:bg-white/5 hover:text-sky-400 transition-all no-underline">
+                            <i class="ph ph-clipboard-text w-4 text-center"></i> Auditoria de Fontes
+                        </a>
+                    </div>
+                </div>
+                
+                <a href="../index.html"
+                    class="p-2 bg-slate-800/5 hover:bg-slate-800/10 rounded border border-white/10 text-xs text-dim transition-all no-underline"
+                    title="Voltar para Documentação">
+                    <i class="ph ph-book"></i> Docs
+                </a>
+                <!-- Theme Toggle -->
+                <button id="theme-toggle"
+                    class="w-10 h-10 rounded-full bg-slate-800/10 border border-white/10 flex items-center justify-center text-dim hover:text-white transition-all cursor-pointer">
+                    <i class="fas fa-moon text-sm"></i>
+                </button>
+                <div class="p-2 bg-primary/20 rounded border border-primary/50 text-xs text-primary font-bold">
+                    OPERACIONAL
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="network-status-bar bg-slate-800/50">
+        <div class="flex items-center cursor-pointer hover:bg-white/5 px-2 py-1 rounded-full transition-all border border-transparent hover:border-white/10"
+            onclick="simulateNetworkMapping('ubs')">
+            <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]"></div>
+            <span class="text-[11px] font-bold ml-2 text-slate-300">86 UBS/USF</span>
+        </div>
+        <div class="flex items-center border-l border-slate-700/50 pl-4 cursor-pointer hover:bg-white/5 px-2 py-1 rounded-full transition-all border border-transparent hover:border-white/10"
+            onclick="simulateNetworkMapping('upa')">
+            <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]"></div>
+            <span class="text-[11px] font-bold ml-2 text-slate-300">05 UPAs</span>
+        </div>
+        <div class="flex items-center border-l border-slate-700/50 pl-4 cursor-pointer hover:bg-white/5 px-2 py-1 rounded-full transition-all border border-transparent hover:border-white/10"
+            onclick="simulateNetworkMapping('hosp')">
+            <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]"></div>
+            <span class="text-[11px] font-bold ml-2 text-slate-300">03 Hospitais</span>
+        </div>
+        <div class="flex items-center border-l border-slate-700/50 pl-4 cursor-pointer hover:bg-white/5 px-2 py-1 rounded-full transition-all border border-transparent hover:border-white/10"
+            onclick="simulateNetworkMapping('caps')">
+            <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]"></div>
+            <span class="text-[11px] font-bold ml-2 text-slate-300">12 CAPS</span>
+        </div>
+        
+        <!-- COMPACT DISTRICTS -->
+        <div class="flex items-center border-l border-slate-700/50 pl-3 pr-2 gap-2">
+            <span class="text-[8px] font-black uppercase text-slate-500 tracking-tighter whitespace-nowrap">Distritos</span>
+            <div class="flex items-center gap-0.5">
+                <div title="DABEL" class="flex items-center gap-1 bg-slate-400/5 px-1 py-0.5 rounded border border-white/5 cursor-default hover:bg-white/10 transition-colors">
+                    <span class="text-[8px] font-bold text-slate-400">DABEL</span>
+                    <div class="w-1 h-1 rounded-full bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.5)]"></div>
+                </div>
+                <div title="DAENT" class="flex items-center gap-1 bg-slate-400/5 px-1 py-0.5 rounded border border-white/5 cursor-default hover:bg-white/10 transition-colors">
+                    <span class="text-[8px] font-bold text-slate-400">DAENT</span>
+                    <div class="w-1 h-1 rounded-full bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.5)]"></div>
+                </div>
+                <div title="DAICO" class="flex items-center gap-1 bg-slate-400/5 px-1 py-0.5 rounded border border-white/5 cursor-default hover:bg-white/10 transition-colors">
+                    <span class="text-[8px] font-bold text-slate-400">DAICO</span>
+                    <div class="w-1 h-1 rounded-full bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.5)]"></div>
+                </div>
+                <div title="DAOUT" class="flex items-center gap-1 bg-orange-500/10 px-1 py-0.5 rounded border border-orange-500/30 cursor-default hover:bg-orange-500/20 transition-colors animate-pulse">
+                    <span class="text-[8px] font-bold text-orange-400">DAOUT</span>
+                    <div class="w-1 h-1 rounded-full bg-orange-500 shadow-[0_0_3px_rgba(249,115,22,0.5)]"></div>
+                </div>
+                <div title="DAMOS" class="flex items-center gap-1 bg-slate-400/5 px-1 py-0.5 rounded border border-white/5 cursor-default hover:bg-white/10 transition-colors">
+                    <span class="text-[8px] font-bold text-slate-400">DAMOS</span>
+                    <div class="w-1 h-1 rounded-full bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.5)]"></div>
+                </div>
+                <div title="DASAC" class="flex items-center gap-1 bg-slate-400/5 px-1 py-0.5 rounded border border-white/5 cursor-default hover:bg-white/10 transition-colors">
+                    <span class="text-[8px] font-bold text-slate-400">DASAC</span>
+                    <div class="w-1 h-1 rounded-full bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.5)]"></div>
+                </div>
+                <div title="DABEN" class="flex items-center gap-1 bg-slate-400/5 px-1 py-0.5 rounded border border-white/5 cursor-default hover:bg-white/10 transition-colors">
+                    <span class="text-[8px] font-bold text-slate-400">DABEN</span>
+                    <div class="w-1 h-1 rounded-full bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.5)]"></div>
+                </div>
+                <div title="DAGUA" class="flex items-center gap-1 bg-slate-400/5 px-1 py-0.5 rounded border border-white/5 cursor-default hover:bg-white/10 transition-colors">
+                    <span class="text-[8px] font-bold text-slate-400">DAGUA</span>
+                    <div class="w-1 h-1 rounded-full bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.5)]"></div>
+                </div>
+            </div>
+        </div>
+        <!-- NEWS TICKER (ESTEIRA) -->
+        <div class="flex items-center border-l border-slate-700/50 pl-4 flex-1 overflow-hidden min-w-0">
+            <span class="text-[9px] font-black uppercase text-red-500 tracking-tighter whitespace-nowrap mr-8 flex items-center gap-1.5">
+                <i class="ph ph-satellite animate-pulse"></i> LIVE FEED
+            </span>
+            <div class="ticker-container flex-1">
+                <div id="news-ticker" class="ticker-wrapper">
+                    <!-- Ticker items will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="main-grid">
+        <div class="status-row-wrapper">
+            <div class="status-row">
+                <!-- EPI CARD (Emergency) -->
+                <div class="kpi-stats-card status-emergency active" id="btn-epi" onclick="filterMapLayers('epi')">
+                    <div class="kpi-card-left">
+                        <div class="kpi-card-icon"><i class="ph ph-heartbeat"></i></div>
+                        <div class="kpi-card-info">
+                            <span class="kpi-card-label">Vigilância em Saúde</span>
+                            <div class="kpi-card-value-row">
+                                <span class="kpi-card-value" id="top-val-epi">415</span>
+                                <span class="kpi-card-unit" id="top-unit-epi"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kpi-card-right">
+                        <div class="kpi-card-badge" id="top-badge-epi">Emergência</div>
+                        <div class="level-indicator" id="top-level-epi">
+                            <div class="level-bar active"></div>
+                            <div class="level-bar active"></div>
+                            <div class="level-bar active"></div>
+                            <div class="level-bar active"></div>
+                            <span class="level-text">4/4</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VISA CARD (Normal) -->
+                <div class="kpi-stats-card status-normal" id="btn-visa" onclick="filterMapLayers('visa')">
+                    <div class="kpi-card-left">
+                        <div class="kpi-card-icon"><i class="ph ph-microscope"></i></div>
+                        <div class="kpi-card-info">
+                            <span class="kpi-card-label">Inspeção Sanitária</span>
+                            <div class="kpi-card-value-row">
+                                <span class="kpi-card-value" id="top-val-visa">12.0</span>
+                                <span class="kpi-card-unit" id="top-unit-visa">%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kpi-card-right">
+                        <div class="kpi-card-badge" id="top-badge-visa">Normal</div>
+                        <div class="level-indicator" id="top-level-visa">
+                            <div class="level-bar active"></div>
+                            <div class="level-bar"></div>
+                            <div class="level-bar"></div>
+                            <div class="level-bar"></div>
+                            <span class="level-text">1/4</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CLIMA CARD (Attention) -->
+                <div class="kpi-stats-card status-attention" id="btn-clima" onclick="filterMapLayers('clima')">
+                    <div class="kpi-card-left">
+                        <div class="kpi-card-icon"><i class="ph ph-cloud-sun"></i></div>
+                        <div class="kpi-card-info">
+                            <span class="kpi-card-label">Monitoramento Meteo</span>
+                            <div class="kpi-card-value-row">
+                                <span class="kpi-card-value" id="top-val-clima">38.5</span>
+                                <span class="kpi-card-unit" id="top-unit-clima">°C</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kpi-card-right">
+                        <div class="kpi-card-badge" id="top-badge-clima">Atenção</div>
+                        <div class="level-indicator" id="top-level-clima">
+                            <div class="level-bar active"></div>
+                            <div class="level-bar active"></div>
+                            <div class="level-bar"></div>
+                            <div class="level-bar"></div>
+                            <span class="level-text">2/4</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HIDRO CARD (Normal) -->
+                <div class="kpi-stats-card status-normal" id="btn-hidro" onclick="filterMapLayers('hidro')">
+                    <div class="kpi-card-left">
+                        <div class="kpi-card-icon"><i class="ph ph-waves"></i></div>
+                        <div class="kpi-card-info">
+                            <span class="kpi-card-label">Pressão Hidrológica</span>
+                            <div class="kpi-card-value-row">
+                                <span class="kpi-card-value" id="top-val-hidro">3.45</span>
+                                <span class="kpi-card-unit" id="top-unit-hidro">m</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kpi-card-right">
+                        <div class="kpi-card-badge" id="top-badge-hidro">Normal</div>
+                        <div class="level-indicator" id="top-level-hidro">
+                            <div class="level-bar active"></div>
+                            <div class="level-bar"></div>
+                            <div class="level-bar"></div>
+                            <div class="level-bar"></div>
+                            <span class="level-text">1/4</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <aside class="ai-insight-panel border-r border-white/5 flex flex-col h-full overflow-hidden">
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 no-scrollbar">
+            <!-- AI Context Header -->
+            <div class="ai-ctx-header flex items-center justify-between mb-4">
+                <h3 class="text-xs font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                    <i class="ph ph-cpu"></i>
+                    <span id="ai-ctx-title">ANÁLISE: EPI</span>
+                </h3>
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
+                    <span class="text-[9px] text-primary font-black tracking-widest">LIVE ENGINE</span>
+                </div>
+            </div>
+
+            <!-- Main Probability Card -->
+            <div class="ai-prob-card mb-4">
+                <span id="ai-prob-label" class="label-secondary">Probabilidades de Surto</span>
+                <div class="flex items-center gap-2">
+                    <span id="ai-prob-val" class="text-4xl font-black text-white tracking-tighter">88.9%</span>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-red-500 font-black leading-none">↑ 12%</span>
+                        <span class="text-[8px] text-dim font-bold uppercase leading-none">Trend</span>
+                    </div>
+                </div>
+                <div id="ai-prob-desc" class="w-full">
+                    <!-- Status Badge will be injected here by script -->
+                </div>
+            </div>
+
+            <!-- Risk Drivers Section -->
+            <div class="flex flex-col gap-2 mb-4">
+                <span class="label-secondary" id="ai-drivers-title">Drivers de Causalidade</span>
+                <div id="ai-drivers-container" class="ai-driver-container">
+                    <div class="ai-driver-item">
+                        <div class="flex items-center gap-3">
+                            <i id="ai-driver-1-icon" class="ph ph-cloud-showers-heavy text-blue-400 text-xs"></i>
+                            <span id="ai-driver-1-label" class="text-[11px] text-slate-300 font-medium">Chuva Acumulada</span>
+                        </div>
+                        <span id="ai-driver-1-val" class="text-[11px] font-bold text-red-400">140mm</span>
+                    </div>
+
+                    <div class="ai-driver-item">
+                        <div class="flex items-center gap-3">
+                            <i id="ai-driver-2-icon" class="ph ph-thermometer-hot text-orange-400 text-xs"></i>
+                            <span id="ai-driver-2-label" class="text-[11px] text-slate-300 font-medium">Ind. Calor</span>
+                        </div>
+                        <span id="ai-driver-2-val" class="text-[11px] font-bold text-orange-400">42°C</span>
+                    </div>
+
+                    <div class="ai-driver-item">
+                        <div class="flex items-center gap-3">
+                            <i id="ai-driver-3-icon" class="ph ph-bug text-purple-400 text-xs"></i>
+                            <span id="ai-driver-3-label" class="text-[11px] text-slate-300 font-medium">LIRAa</span>
+                        </div>
+                        <span id="ai-driver-3-val" class="text-[11px] font-bold text-red-400">Alto</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tactical Actions -->
+            <div class="flex flex-col gap-2 mb-4">
+                <span class="label-secondary">Ações Táticas Recomendadas</span>
+                <ul id="ai-actions-list" class="ai-action-list">
+                    <!-- Dynamic Items -->
+                </ul>
+            </div>
+
+            <!-- AI Insight (Thought) -->
+            <div class="flex flex-col gap-2">
+                <span class="label-secondary">Análise Situacional (LLM)</span>
+                <div class="ai-thought-box">
+                    <p id="ai-thought-text" class="italic">
+                        <!-- Dynamic -->
+                    </p>
+                </div>
+            </div>
+
+            </div>
+
+        </aside>
+
+        <!-- CENTER: LARGE MAP -->
+        <section class="map-section">
+            <!-- Custom Layer Control -->
+            <div class="map-layer-control">
+                <button class="layer-toggle-btn" id="layerToggleBtn" onclick="toggleLayerMenu()"
+                    title="Escolher Camada Base">
+                    <i class="ph ph-stack"></i>
+                </button>
+                <div class="layer-menu" id="layerMenu">
+                    <div class="text-[9px] text-slate-500 font-bold uppercase mb-2 px-1">Camada Base</div>
+                    <div class="layer-option active" onclick="setBaseLayer('dark', this)">
+                        <div class="layer-preview" style="background-color: #0f172a;"></div>
+                        <span>Noturno</span>
+                    </div>
+                    <div class="layer-option" onclick="satelliteLayer && map.addLayer(satelliteLayer); setBaseLayer('satellite', this)">
+                        <div class="layer-preview" style="background-color: #14532d;"></div>
+                        <span>Satélite</span>
+                    </div>
+                    <div class="layer-option" onclick="setBaseLayer('standard', this)">
+                        <div class="layer-preview" style="background-color: #334155;"></div>
+                        <span>Padrão</span>
+                    </div>
+                    <div class="border-t border-slate-700/50 my-2 pt-2"></div>
+                    <div class="text-[9px] text-slate-500 font-bold uppercase mb-2 px-1">Filtros/Sobreposição</div>
+                    <div class="layer-option" onclick="toggleOverlay('rivers', this)">
+                        <div class="layer-preview" style="background: linear-gradient(45deg, #0ea5e9, #3b82f6);"></div>
+                        <span>Malha Hidrográfica</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tactical Map Area -->
+            <div id="map"></div>
+
+            <!-- Floating Tactical HUD Tags (Over Map) -->
+            <div class="map-hud-container">
+                <div class="hud-tag epi active" id="hud-epi" onclick="filterMapLayers('epi')">
+                    <div class="hud-tag-dot"></div>
+                    <i class="ph ph-heartbeat"></i>
+                    <span>Epidemiologia</span>
+                </div>
+                <div class="hud-tag visa" id="hud-visa" onclick="filterMapLayers('visa')">
+                    <div class="hud-tag-dot"></div>
+                    <i class="ph ph-microscope"></i>
+                    <span>Sanitária</span>
+                </div>
+                <div class="hud-tag clima" id="hud-clima" onclick="filterMapLayers('clima')">
+                    <div class="hud-tag-dot"></div>
+                    <i class="ph ph-cloud-sun"></i>
+                    <span>Clima</span>
+                </div>
+                <div class="hud-tag hidro" id="hud-hidro" onclick="filterMapLayers('hidro')">
+                    <div class="hud-tag-dot"></div>
+                    <i class="ph ph-waves"></i>
+                    <span>Hidro</span>
+                </div>
+            </div>
+
+            <!-- Botão Captura Coordenada - Movido para a esquerda para não conflitar com a legenda -->
+            <div id="coord-picker-btn" onclick="toggleCoordPicker()"
+                class="absolute bottom-4 left-4 z-[1001] bg-slate-800/80 backdrop-blur-md p-2 rounded-full border border-slate-200 shadow-lg cursor-pointer hover:bg-slate-800 transition-all flex items-center justify-center"
+                title="Capturar Coordenadas">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="text-slate-400">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="22" y1="12" x2="18" y2="12"></line>
+                    <line x1="6" y1="12" x2="2" y2="12"></line>
+                    <line x1="12" y1="6" x2="12" y2="2"></line>
+                    <line x1="12" y1="22" x2="12" y2="18"></line>
+                </svg>
+            </div>
+
+            <!-- Display Coordenadas -->
+            <div id="coord-display"
+                class="hidden absolute bottom-16 left-4 z-[1001] bg-slate-900 text-white text-[11px] px-3 py-2 rounded-lg shadow-2xl flex items-center gap-3">
+                <span id="coord-text">0.000, 0.000</span>
+                <button onclick="copyCoords()"
+                    class="bg-blue-600 px-2 py-0.5 rounded hover:bg-blue-500 transition-colors font-bold">COPIAR</button>
+            </div>
+            
+            <!-- Integrated Situational Vision Badge (HUD) -->
+            <div class="absolute bottom-6 right-6 z-[1000] bg-slate-900/80 backdrop-blur-md border border-white/10 p-3 rounded-lg shadow-2xl pointer-events-none">
+                <div class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Visão Situacional Integrada</div>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                        <span class="text-[10px] font-bold text-slate-300">Arboviroses</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                        <span class="text-[10px] font-bold text-slate-300">VISA</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                        <span class="text-[10px] font-bold text-slate-300">Calor</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                        <span class="text-[10px] font-bold text-slate-300">Hidro</span>
+                    </div>
+                </div>
+                <div class="mt-2 pt-1 border-t border-white/5 flex items-center justify-between">
+                    <span class="text-[8px] font-bold text-primary italic">— PROJEÇÃO AI (D+7)</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT: 4 DATA-RICH PANELS (2x2 GRID) -->
+        <div class="data-panels-container grid grid-cols-2 grid-rows-2 gap-4">
+            <!-- PANEL 1: VIGILÂNCIA EM SAÚDE (DEVS / CIEVS) -->
+            <aside class="data-panel" style="border-top: 4px solid #ef4444;">
+                <div class="panel-header">
+                    <div class="flex items-center gap-2">
+                        <i class="ph ph-heartbeat text-red-400"></i>
+                        <span class="text-[13px] font-bold uppercase tracking-wider">Vigilância em Saúde</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="range-selector bg-slate-700/50">
+                            <div onclick="updateDataRange(7, this, 'epi')" class="range-btn active">7D</div>
+                            <div onclick="updateDataRange(15, this, 'epi')" class="range-btn">15D</div>
+                            <div onclick="updateDataRange(30, this, 'epi')" class="range-btn">30D</div>
+                        </div>
+                        <span id="status-epi" class="bg-red-600 text-white px-3 py-1 rounded font-black text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(239,68,68,0.4)]">Emergência</span>
+                    </div>
+                </div>
+
+                <div class="panel-body-top">
+                    <!-- Protocol Box -->
+                    <div id="protocol-card-epi" class="protocol-card level-4">
+                        <div id="protocol-title-epi" class="protocol-header">
+                            <i class="ph ph-warning animate-pulse"></i>
+                            PROTOCOLO DE EMERGÊNCIA (NÍVEL 4)
+                        </div>
+                        <div class="protocol-body">
+                            <div class="protocol-info-row">
+                                <i class="ph ph-shield-check text-red-500 animate-pulse"></i>
+                                <span class="label">CIEVS Municipal:</span>
+                                <span class="value">GABINETE DE CRISE ATIVO</span>
+                            </div>
+                            <div class="protocol-info-row">
+                                <i class="ph ph-ambulance text-orange-400"></i>
+                                <span class="label">Resposta Rápida:</span>
+                                <span class="value">EQUIPES DE CAMPO 24/7</span>
+                            </div>
+                            <div class="protocol-info-row">
+                                <i class="ph ph-bed text-blue-400"></i>
+                                <span class="label">Rede de Urgência:</span>
+                                <span class="value">LEITOS/INSUMOS MÁXIMOS</span>
+                            </div>
+                            <div class="protocol-info-row">
+                                <i class="ph ph-git-fork text-green-400"></i>
+                                <span class="label">Articulação SESPA/MS:</span>
+                                <span class="value">COMUNICAÇÃO IMEDIATA</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI Grid -->
+                    <div class="kpi-grid-2x2">
+                        <div id="val-dda" onclick="updateEpiChart('dda')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">DDA</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">415</span>
+                                <span class="text-[10px] font-black text-red-500">↑50%</span>
+                            </div>
+                        </div>
+                        <div id="val-arbo" onclick="updateEpiChart('arbo')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">Arbo</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">89</span>
+                                <span class="text-[10px] font-black text-orange-400">↑12%</span>
+                            </div>
+                        </div>
+                        <div id="val-lepto" onclick="updateEpiChart('lepto')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">Lepto</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">12</span>
+                                <span class="text-[10px] font-black text-red-500">↑5%</span>
+                            </div>
+                        </div>
+                        <div id="val-mort" onclick="updateEpiChart('mort')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">Calor</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">02</span>
+                                <span class="text-[10px] font-black text-green-500">↓10%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Graphic Area -->
+                <div class="panel-chart-area">
+                    <div class="chart-badge">CUSUM: ALARME ESTATÍSTICO</div>
+                    <div id="epi-chart-header" class="flex justify-between mb-1">
+                        <span id="epi-chart-title" class="text-[11px] font-bold text-slate-400">Síndromes Respiratórias vs Arboviroses</span>
+                    </div>
+                    <div id="arboviroses-chart" style="flex: 1; min-height: 0;"></div>
+                </div>
+                <footer id="epi-footer" class="panel-footer mt-2 pt-2 border-t border-white/5 flex flex-wrap gap-x-4 gap-y-1">
+                    <!-- Threshold Legends will be injected here -->
+                </footer>
+            </aside>
+            <!-- PANEL 2: SANITÁRIA (DEVISA) -->
+            <aside class="data-panel" style="border-top: 4px solid #10b981;">
+                <div class="panel-header">
+                    <div class="flex items-center gap-2">
+                        <i class="ph ph-microscope text-green-400"></i>
+                        <span class="text-[13px] font-bold uppercase tracking-wider">Vigilância Sanitária</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="range-selector bg-slate-700/50">
+                            <div onclick="updateDataRange(7, this, 'visa')" class="range-btn active">7D</div>
+                            <div onclick="updateDataRange(15, this, 'visa')" class="range-btn">15D</div>
+                            <div onclick="updateDataRange(30, this, 'visa')" class="range-btn">30D</div>
+                        </div>
+                        <span id="status-visa" class="bg-green-600 text-white px-3 py-1 rounded font-black text-xs uppercase tracking-wider">Normal</span>
+                    </div>
+                </div>
+
+                <div class="panel-body-top">
+                    <div id="protocol-card-visa" class="protocol-card level-1">
+                        <div id="protocol-title-visa" class="protocol-header">
+                            <i class="ph ph-check-circle"></i>
+                            PROTOCOLO DE NORMALIDADE (N1)
+                        </div>
+                        <div class="protocol-body">
+                            <div class="protocol-info-row">
+                                <i class="ph ph-drop text-green-400"></i>
+                                <span class="label">VIGIAGUA:</span>
+                                <span class="value">DENTRO DOS PADRÕES</span>
+                            </div>
+                            <div class="protocol-info-row">
+                                <i class="ph ph-wind text-blue-400"></i>
+                                <span class="label">VIGIAR:</span>
+                                <span class="value">MONITORAMENTO DE ROTINA</span>
+                            </div>
+                            <div class="protocol-info-row">
+                                <i class="fas fa-vials text-purple-400"></i>
+                                <span class="label">Surtos/Lab:</span>
+                                <span class="value">SEM SINAIS DE ALERTA</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-grid-2x2">
+                        <div id="val-lacen" onclick="updateVisaChart('lacen')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">LACEN</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">14</span>
+                                <span class="text-[10px] font-black text-green-500">↑2%</span>
+                            </div>
+                        </div>
+                        <div id="val-vigiar" onclick="updateVisaChart('vigiar')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">Ar</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">52</span>
+                                <span class="text-[10px] font-black text-red-500">↑48%</span>
+                            </div>
+                        </div>
+                        <div id="val-vigiagua" onclick="updateVisaChart('vigiagua')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">Água</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">92%</span>
+                                <span class="text-[10px] font-black text-green-500">↑4%</span>
+                            </div>
+                        </div>
+                        <div id="val-dta" onclick="updateVisaChart('dta')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">DTA</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">01</span>
+                                <span class="text-[10px] font-black text-slate-400">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-chart-area">
+                    <div id="visa-chart-header" class="flex justify-between mb-1">
+                        <span id="visa-chart-title" class="text-[11px] font-bold text-slate-400">Qualidade da Água (VIGIAGUA/VISAMB)</span>
+                    </div>
+                    <div id="visa-chart" style="flex: 1; min-height: 0;"></div>
+                </div>
+                <footer id="visa-footer" class="panel-footer mt-2 pt-2 border-t border-white/5 flex flex-wrap gap-x-4 gap-y-1">
+                </footer>
+            </aside>
+
+            <!-- PANEL 3: MONITOR CLIMÁTICO -->
+            <aside class="data-panel" style="border-top: 4px solid #f97316;">
+                <div class="panel-header">
+                    <div class="flex items-center gap-2">
+                        <i class="ph ph-cloud-sun text-orange-400"></i>
+                        <span class="text-[13px] font-bold uppercase tracking-wider">Inteligência Meteo</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="range-selector bg-slate-700/50">
+                            <div onclick="updateDataRange(7, this, 'clima')" class="range-btn active">7D</div>
+                            <div onclick="updateDataRange(15, this, 'clima')" class="range-btn">15D</div>
+                            <div onclick="updateDataRange(30, this, 'clima')" class="range-btn">30D</div>
+                        </div>
+                        <span id="status-clima" class="bg-yellow-600 text-slate-900 px-3 py-1 rounded font-black text-xs uppercase tracking-wider">Atenção</span>
+                    </div>
+                </div>
+
+                <div class="panel-body-top">
+                    <div id="protocol-card-clima" class="protocol-card level-2">
+                        <div id="protocol-title-clima" class="protocol-header">
+                            <i class="fas fa-info-circle"></i>
+                            PROTOCOLO DE ATENÇÃO (NÍVEL 2)
+                        </div>
+                        <div class="protocol-body">
+                            <div class="protocol-info-row">
+                                <i class="ph ph-satellite text-blue-400"></i>
+                                <span class="label">Radar:</span>
+                                <span class="value">MONITORAMENTO CONTÍNUO</span>
+                            </div>
+                            <div class="protocol-info-row">
+                                <i class="ph ph-cloud-showers-heavy text-yellow-400"></i>
+                                <span class="label">Risco:</span>
+                                <span class="value">ACUMULADO CRÍTICO (72H)</span>
+                            </div>
+                            <div class="protocol-info-row">
+                                <i class="ph ph-broadcast text-orange-400"></i>
+                                <span class="label">Ações:</span>
+                                <span class="value">AVISOS DISPARADOS</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-grid-2x2">
+                        <div id="val-uv" onclick="updateClimaChart('uv')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">Tmax</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">35°</span>
+                                <span class="text-[10px] font-black text-orange-400">↑1°</span>
+                            </div>
+                        </div>
+                        <div id="val-ic" onclick="updateClimaChart('ic')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">IC</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">41°</span>
+                                <span class="text-[10px] font-black text-red-500">↑3°</span>
+                            </div>
+                        </div>
+                        <div id="val-precip" onclick="updateClimaChart('precip')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">Chuva</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">42mm</span>
+                                <span class="text-[10px] font-black text-green-500">↓15%</span>
+                            </div>
+                        </div>
+                        <div id="val-precip72" onclick="updateClimaChart('precip72')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">72h</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">114mm</span>
+                                <span class="text-[10px] font-black text-orange-400">↑20%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-chart-area">
+                    <div id="clima-chart-header" class="flex justify-between mb-1">
+                        <span id="clima-chart-title" class="text-[11px] font-bold text-slate-400">Temperatura Máxima (Tmax)</span>
+                    </div>
+                    <div id="heat-chart" style="flex: 1; min-height: 0;"></div>
+                </div>
+                <footer id="clima-footer" class="panel-footer mt-2 pt-2 border-t border-white/5 flex flex-wrap gap-x-4 gap-y-1">
+                </footer>
+            </aside>
+
+            <!-- PANEL 4: HIDROLOGIA -->
+            <aside class="data-panel" style="border-top: 4px solid #3b82f6;">
+                <div class="panel-header">
+                    <div class="flex items-center gap-2">
+                        <i class="ph ph-waves text-blue-400"></i>
+                        <span class="text-[13px] font-bold uppercase tracking-wider">Monitoramento Hidro</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="range-selector bg-slate-700/50">
+                            <div onclick="updateDataRange(7, this, 'hidro')" class="range-btn active">7D</div>
+                            <div onclick="updateDataRange(15, this, 'hidro')" class="range-btn">15D</div>
+                            <div onclick="updateDataRange(30, this, 'hidro')" class="range-btn">30D</div>
+                        </div>
+                        <span id="status-hidro" class="bg-orange-600 text-white px-3 py-1 rounded font-black text-xs uppercase tracking-wider shadow-[0_0_10px_rgba(249,115,22,0.3)]">Alerta</span>
+                    </div>
+                </div>
+
+                <div class="panel-body-top">
+                    <div id="protocol-card-hidro" class="protocol-card level-3">
+                        <div id="protocol-title-hidro" class="protocol-header">
+                            <i class="ph ph-megaphone"></i>
+                            PROTOCOLO DE ALERTA (NÍVEL 3)
+                        </div>
+                        <div class="protocol-body">
+                            <div class="protocol-info-row">
+                                <i class="ph ph-waves text-blue-400"></i>
+                                <span class="label">Cotas:</span>
+                                <span class="value">MONITORAMENTO ATIVO</span>
+                            </div>
+                            <div class="protocol-info-row">
+                                <i class="ph ph-house-line text-orange-400"></i>
+                                <span class="label">Inundação:</span>
+                                <span class="value">MAPEAMENTO DE ÁREAS</span>
+                            </div>
+                            <div class="protocol-info-row">
+                                <i class="ph ph-shield text-green-400"></i>
+                                <span class="label">Defesa Civil:</span>
+                                <span class="value">PRONTIDÃO / AVISADA</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-grid-2x2">
+                        <div id="val-rio" onclick="updateHidroChart('rio')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">Rio</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">3.58m</span>
+                                <span class="text-[10px] font-black text-red-500">↑0.2</span>
+                            </div>
+                        </div>
+                        <div id="val-mare" onclick="updateHidroChart('mare')" class="bg-slate-800/50 p-2 rounded border border-slate-700 cursor-pointer hover:bg-slate-700 transition-colors flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">Maré</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">3.1m</span>
+                                <span class="text-[10px] font-black text-green-500">↓0.5</span>
+                            </div>
+                        </div>
+                        <div class="bg-slate-800/50 p-2 rounded border border-slate-700 flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">Cota</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-white text-[15px] font-black">3.5m</span>
+                                <span class="text-[10px] font-black text-slate-500">-</span>
+                            </div>
+                        </div>
+                        <div id="val-risco" class="bg-slate-800/50 p-2 rounded border border-slate-700 flex flex-col justify-between">
+                            <div class="text-[10px] text-dim uppercase font-bold">Risco</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span id="val-risco-hidro" class="text-white text-[15px] font-black">MÉDIO</span>
+                                <span id="trend-risco-hidro" class="text-[10px] font-black text-orange-400">ESTÁVEL</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-chart-area">
+                    <div id="hydro-chart-header" class="flex justify-between mb-1">
+                        <span id="hydro-chart-title" class="text-[11px] font-bold text-slate-400">Nível do Rio (m)</span>
+                    </div>
+                    <div id="hydro-chart" style="flex: 1; min-height: 0;"></div>
+                </div>
+                <footer id="hidro-footer" class="panel-footer mt-2 pt-2 border-t border-white/5 flex flex-wrap gap-x-4 gap-y-1">
+                </footer>
+            </aside>
+        </div>
+    </main>
+
+    <!-- MODAL DE PROMOÇÃO DA SAÚDE E ALERTAS COMUNITÁRIOS (WHATSAPP PREVIEW) -->
+    <div id="promo-saude-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99999] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl transition-all duration-300">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-slate-950">
+                <div class="flex items-center gap-2 text-emerald-400 font-bold">
+                    <i class="ph ph-megaphone text-lg"></i>
+                    <span class="text-xs uppercase tracking-widest font-black">Central de Promoção da Saúde</span>
+                </div>
+                <button onclick="fecharPromocaoSaude()" class="text-slate-400 hover:text-white transition-colors cursor-pointer">
+                    <i class="ph ph-x text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- Body -->
+            <div class="p-6 flex flex-col gap-4">
+                <div class="text-xs text-slate-400 leading-relaxed">
+                    Este informativo educativo é gerado dinamicamente com base nas condições climáticas e epidemiológicas vigentes. Compartilhe este alerta com Agentes Comunitários de Saúde (ACS) e grupos comunitários locais.
+                </div>
+                
+                <!-- WhatsApp Mobile Template Mockup -->
+                <div class="bg-[#0b141a] rounded-xl border border-white/5 p-4 relative font-sans">
+                    <div class="absolute top-2 right-4 text-[9px] text-emerald-500 font-bold uppercase tracking-wider">Visualização WhatsApp</div>
+                    <!-- Contact Header -->
+                    <div class="flex items-center gap-2 mb-3 pb-2 border-b border-white/5">
+                        <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">
+                            <i class="ph ph-users"></i>
+                        </div>
+                        <div class="flex flex-col text-left">
+                            <span class="text-xs font-bold text-slate-200">ACS Belém - Canal de Alerta</span>
+                            <span class="text-[9px] text-emerald-500">Transmissão Oficial</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Message Bubble -->
+                    <div class="bg-[#202c33] text-slate-200 rounded-lg p-3 text-xs leading-relaxed max-w-[90%] shadow-md text-left">
+                        <div id="promo-bubble-header" class="font-bold text-emerald-400 mb-1">📢 ALERTA DE SAÚDE PÚBLICA</div>
+                        <p id="promo-bubble-text" class="whitespace-pre-line"></p>
+                        <div class="text-right text-[9px] text-slate-400 mt-2">CISC Belém · SESMA</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer Actions -->
+            <div class="px-6 py-4 border-t border-white/5 flex gap-3 bg-slate-950">
+                <button onclick="fecharPromocaoSaude()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition-all cursor-pointer text-center">
+                    FECHAR
+                </button>
+                <button onclick="copiarTextoAlerta()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white rounded-lg transition-all cursor-pointer text-center flex items-center justify-center gap-2">
+                    <i class="ph ph-copy"></i> COPIAR TEXTO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+
+</html>
