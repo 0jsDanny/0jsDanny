@@ -48,6 +48,7 @@ Below is a catalog of the modules, patterns, and case studies included in this r
 | **GIS & Frontend** | [visabelem-mock](./visabelem-mock) | `React` `TS` `Tailwind` | High-fidelity interactive prototype for stakeholder alignment, dual citizen/admin portal flows, and animated transitions. |
 | **Public Health & GIS** | [cisc-situation-room](./cisc-situation-room) | `HTML` `JS` `Tailwind` | Interactive Situation Room dashboard (Videowall) mapping multi-sector alerts (epidemiological, meteorological, water levels) and dispatching community educational bulletins. |
 | **Data Engineering** | [cisc-data-pipelines](./cisc-data-pipelines) | `Python` `SQLite` `SQL` | Health and climate ETL pipelines (SINAN, INMET, CEMADEN, Navy tides), statistical anomaly models (CUSUM, Spearman lag, logistic regression), and SQL database schemas (LGPD compliant - raw data omitted). |
+| **Go Engineering** | [go-cisc-telemetry-hub](./go-cisc-telemetry-hub) | `Go` `gRPC` `GraphQL` | Central data ingestion and real-time distribution engine for the CISC Belém health-climate platform. Implements concurrent servers for gRPC and GraphQL Subscriptions (SSE). |
 | **Security & Data** | [ghdb-map-generator](./ghdb-map-generator) | `Python` `HTML` `JS` | ETL pipeline processing large XML datasets (5.5MB) from ZIP files to generate an interactive tactical dashboard, demonstrating practical OSINT and vulnerability testing proficiency as a hobby. |
 
 ---

@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package telemetry;
+
+option go_package = "github.com/0jsDanny/go-cisc-telemetry-hub/proto";
+
+message TelemetryData {
+  string timestamp = 1;
+  string source = 2; // e.g. "INMET", "CEMADEN", "NAVY"
+  string neighborhood = 3; // e.g. "Pedreira", "Marco"
+  float temperature = 4;
+  float humidity = 5;
+  float heat_index = 6;
+  float rainfall = 7;
+  float river_level = 8;
+  string alert_level = 9; // "NORMAL", "ATENCAO", "ALERTA", "EMERGENCIA"
+  string alert_description = 10;
+}
+
+message TelemetryResponse {
+  bool success = 1;
+  string message = 2;
+  int64 id = 3;
+}
+
+service TelemetryIngestion {
+  rpc SubmitTelemetry (TelemetryData) returns (TelemetryResponse);
+}

@@ -72,6 +72,8 @@ Engenheiro de Software baseado em Belém, Brasil. Construo sistemas de produçã
 
 **[go-cptec-proxy](https://github.com/0jsDanny/go-cptec-proxy)** — Go proxy service for the CPTEC/INPE meteorological XML API. Translates ISO-8859-1 encodings, normalizes payloads to JSON, and implements thread-safe memory caching with fallbacks.
 
+**[go-cisc-telemetry-hub](https://github.com/0jsDanny/go-cisc-telemetry-hub)** — Central data ingestion and real-time distribution engine for the CISC Belém platform. Implements concurrent servers running gRPC (for high-performance data ingestion) and GraphQL Subscriptions via Server-Sent Events (SSE) (for streaming alerts to videowall dashboards).
+
 ---
 
 ## 📊 Data Engineering
