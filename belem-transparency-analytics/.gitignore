@@ -1,0 +1,15 @@
+# Temporary PDF and extracted data
+data/
+# Output reports if needed to be ignored (but we keep reports/relatorio_completo.md tracked)
+data/pdfs/
+data/raw/
+# Python environment and cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+ENV/
+.env
